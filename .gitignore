@@ -21,6 +21,8 @@ Thumbs.db
 # Kotlin
 .kotlin/
 
-# Keystores
+# Keystores (the release key lives in GitHub Secrets, never in the repository)
 *.jks
 *.keystore
+*.p12
+*.pfx

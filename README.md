@@ -1,8 +1,18 @@
 # Gym Tracker
 
+[![Android build](https://github.com/BoykoDmytr/GYM_Tracker/actions/workflows/android.yml/badge.svg)](https://github.com/BoykoDmytr/GYM_Tracker/actions/workflows/android.yml)
+
 Android-застосунок для тренувань у залі: вбудована програма Full Body A/B/C, покрокове проходження
 тренування з таймером відпочинку, історія, прогрес у вправах, параметри тіла та нагадування.
 Усі дані зберігаються локально на пристрої.
+
+## Завантажити
+
+- **Остання версія:** [gym-tracker.apk](https://github.com/BoykoDmytr/GYM_Tracker/releases/latest/download/gym-tracker.apk)
+  — публікується автоматично, щойно в репозиторії налаштовано ключ підпису
+  ([docs/SIGNING.md](docs/SIGNING.md)).
+- **Будь-яка збірка:** [Actions](https://github.com/BoykoDmytr/GYM_Tracker/actions) → запуск →
+  Artifacts → `gym-tracker-apk`.
 
 ## Можливості
 
@@ -42,6 +52,19 @@ Hilt · Coroutines/Flow · AlarmManager · Coil 3. Графіки — власн
 ```
 
 UI-тести зберігають скриншоти екранів у `app/build/screenshots/`.
+
+## CI (GitHub Actions)
+
+Кожен push запускає `.github/workflows/android.yml`:
+
+1. **Build APK** — release-збірка з R8; номер версії = номер запуску (`0.1.N`), тож кожен APK
+   новіший за попередній.
+2. **Tests and lint** — усі тести та Android Lint; звіти й скриншоти — в Artifacts.
+3. **Launch on Android emulator** — ставить саме цей APK на емулятор Android 15, відкриває всі
+   вкладки й починає тренування. Ловить падіння, які дає лише мініфікована збірка.
+4. **Publish to Releases** — якщо все зелене і APK підписано твоїм ключем, оновлює реліз `latest`.
+
+Підпис і встановлення на телефон — [docs/SIGNING.md](docs/SIGNING.md).
 
 ## Структура
 

@@ -15,13 +15,33 @@ android {
         applicationId = "com.boykodmytr.gymtracker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI stamps each build with the workflow run number, so every downloaded APK is newer than
+        // the one installed and Android accepts it as an update.
+        val ciBuildNumber = providers.environmentVariable("GITHUB_RUN_NUMBER").orNull?.toIntOrNull()
+        versionCode = ciBuildNumber ?: 1
+        versionName = if (ciBuildNumber != null) "0.1.$ciBuildNumber" else "0.1.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Release key comes from the environment (CI secrets, see docs/SIGNING.md) and never lives in the
+    // repository. Without it, release builds fall back to the debug key: installable, but a CI debug
+    // key is new on every run, so such APKs cannot update each other.
+    val releaseKeystore = providers.environmentVariable("SIGNING_KEYSTORE_FILE").orNull
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                val password = providers.environmentVariable("SIGNING_KEYSTORE_PASSWORD").get()
+                storeFile = file(releaseKeystore)
+                storePassword = password
+                keyAlias = providers.environmentVariable("SIGNING_KEY_ALIAS").orNull?.takeIf { it.isNotBlank() } ?: "gymtracker"
+                keyPassword = providers.environmentVariable("SIGNING_KEY_PASSWORD").orNull?.takeIf { it.isNotBlank() } ?: password
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
