@@ -27,6 +27,7 @@ jobs:
     outputs:
       version: ${{ steps.apk.outputs.version }}
       signed_with_release_key: ${{ steps.apk.outputs.signed_with_release_key }}
+      cert_sha256: ${{ steps.apk.outputs.cert_sha256 }}
     env:
       HAS_SIGNING_KEY: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
     steps:
@@ -67,8 +68,12 @@ jobs:
           version=$("$tools/aapt2" dump badging "$source" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")
           mkdir -p dist
           cp "$source" "dist/gym-tracker-$version.apk"
-          "$tools/apksigner" verify --print-certs "dist/gym-tracker-$version.apk" | grep -E "certificate DN|SHA-256"
+          certs=$("$tools/apksigner" verify --print-certs "dist/gym-tracker-$version.apk")
+          printf '%s\n' "$certs" | grep -E "certificate DN|SHA-256"
+          # Same "07:F0:…" form as keytool prints, so it can be compared with the key file.
+          fingerprint=$(printf '%s\n' "$certs" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "cert_sha256=$fingerprint" >> "$GITHUB_OUTPUT"
           echo "signed_with_release_key=$HAS_SIGNING_KEY" >> "$GITHUB_OUTPUT"
           {
             echo "## Gym Tracker $version"
@@ -184,6 +189,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.build.outputs.version }}
+          CERT_SHA256: ${{ needs.build.outputs.cert_sha256 }}
         run: |
           cp dist/*.apk gym-tracker.apk
           cat > notes.md <<NOTES
@@ -194,6 +200,9 @@ jobs:
 
           Постійне посилання на останню версію:
           https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/gym-tracker.apk
+
+          Сертифікат підпису (SHA-256), має збігатися з відбитком у файлі ключа:
+          \`${CERT_SHA256}\`
           NOTES
           gh release delete latest --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
           gh release create latest gym-tracker.apk \
