@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: the database, settings and exercise photos go to cloud backup and device transfer. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="." />
+        <include domain="file" path="datastore/" />
+        <include domain="file" path="exercise_images/" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="." />
+        <include domain="file" path="datastore/" />
+        <include domain="file" path="exercise_images/" />
+    </device-transfer>
+</data-extraction-rules>

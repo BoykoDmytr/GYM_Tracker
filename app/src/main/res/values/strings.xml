@@ -137,6 +137,40 @@
     <string name="summary_record_weight">Рекорд ваги</string>
     <string name="summary_record_1rm">Рекорд 1ПМ</string>
 
+    <!-- Timer -->
+    <string name="timer_title">Таймер</string>
+    <string name="timer_countdown">Таймер</string>
+    <string name="timer_stopwatch">Секундомір</string>
+    <string name="timer_start">Старт</string>
+    <string name="timer_pause">Пауза</string>
+    <string name="timer_resume">Продовжити</string>
+    <string name="timer_reset">Скинути</string>
+    <string name="timer_background_hint">Таймер працює, навіть якщо закрити екран або застосунок: наприкінці буде звук і вібрація.</string>
+
+    <!-- Notifications -->
+    <string name="channel_workout">Активне тренування</string>
+    <string name="channel_workout_description">Тривалість тренування та відлік відпочинку на екрані блокування</string>
+    <string name="channel_timer">Таймер відпочинку</string>
+    <string name="channel_timer_description">Сигнал, коли відпочинок або таймер завершився</string>
+    <string name="channel_reminders">Нагадування про тренування</string>
+    <string name="channel_reminders_description">Нагадування у дні та час тренувань</string>
+    <string name="notification_resting">Відпочинок</string>
+    <string name="notification_next_set">Далі: %1$s — підхід %2$d/%3$d</string>
+    <string name="notification_workout_running">Тренування триває · підходів: %1$d</string>
+    <string name="notification_rest_over_title">Відпочинок завершено</string>
+    <string name="notification_rest_over_text">Час для наступного підходу</string>
+    <string name="notification_timer_over_title">Таймер завершено</string>
+    <string name="notification_timer_over_text">Час вийшов</string>
+    <string name="reminder_title">Сьогодні тренування: %1$s</string>
+    <string name="reminder_title_generic">Сьогодні тренування</string>
+    <string name="reminder_text_generic">Відкрий застосунок, щоб почати.</string>
+    <plurals name="reminder_text">
+        <item quantity="one">%d вправа. Натисни, щоб почати.</item>
+        <item quantity="few">%d вправи. Натисни, щоб почати.</item>
+        <item quantity="many">%d вправ. Натисни, щоб почати.</item>
+        <item quantity="other">%d вправи. Натисни, щоб почати.</item>
+    </plurals>
+
     <plurals name="exercises_count">
         <item quantity="one">%d вправа</item>
         <item quantity="few">%d вправи</item>

@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.boykodmytr.gymtracker.feature.home.HomeScreen
+import com.boykodmytr.gymtracker.feature.timer.TimerScreen
 import com.boykodmytr.gymtracker.feature.workout.active.ActiveWorkoutScreen
 import com.boykodmytr.gymtracker.feature.workout.preview.WorkoutPreviewScreen
 import com.boykodmytr.gymtracker.feature.workout.summary.WorkoutSummaryScreen
@@ -58,7 +59,7 @@ fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable<SessionDetailRoute> { Placeholder("Session") }
         composable<ExerciseEditorRoute> { Placeholder("Exercise") }
         composable<SettingsRoute> { Placeholder("Settings") }
-        composable<TimerRoute> { Placeholder("Timer") }
+        composable<TimerRoute> { TimerScreen(onBack = { navController.popBackStack() }) }
     }
 }
 
