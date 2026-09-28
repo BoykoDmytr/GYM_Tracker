@@ -11,7 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -46,7 +46,7 @@ fun BarChart(
     description: String = "",
 ) {
     if (bars.isEmpty()) return
-    var selected by remember(bars) { mutableStateOf(bars.lastIndex) }
+    var selected by remember(bars) { mutableIntStateOf(bars.lastIndex) }
     val colors = ChartColors.current()
     val measurer = rememberTextMeasurer()
     val axisStyle = MaterialTheme.typography.labelSmall.merge(NumberTextStyle).copy(color = colors.axisText)

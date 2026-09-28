@@ -2,6 +2,7 @@ package com.boykodmytr.gymtracker.ui
 
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -87,5 +88,30 @@ class WorkoutFlowUiTest {
         onNodeWithText("Готово").performClick()
         waitForText("Сьогодні тренування виконано")
         screenshot("09_home_done")
+    }
+
+    @Test
+    fun skipExerciseAndDiscardWorkout(): Unit = with(composeRule) {
+        waitForText("Сьогодні тренування")
+        onNodeWithText("Почати тренування").performClick()
+        waitForText("Почати")
+        onNodeWithText("Почати").performClick()
+        waitForText("Підхід 1 / 3")
+
+        // Skipping moves on to the next exercise without logging anything.
+        onNodeWithText("Пропустити вправу").performClick()
+        waitForText("Румунська тяга зі штангою")
+        onNodeWithText("Вправа 2 з 7").assertExists()
+
+        onNodeWithContentDescription("Ще").performClick()
+        waitForText("Скасувати тренування")
+        onNodeWithText("Скасувати тренування").performClick()
+        waitForText("Скасувати тренування?")
+        onNode(inDialog("Скасувати тренування")).performClick()
+
+        // Back on Home with today's workout still to do and nothing in history.
+        waitForText("Почати тренування")
+        onNodeWithText("Full Body A").assertExists()
+        waitForNoText("Тренування триває")
     }
 }

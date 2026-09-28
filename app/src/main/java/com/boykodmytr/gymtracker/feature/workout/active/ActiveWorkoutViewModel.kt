@@ -84,6 +84,13 @@ class ActiveWorkoutViewModel @Inject constructor(
     /** Session-exercise id for which the user asked for a set beyond the plan. */
     private val extraSetFor = MutableStateFlow<String?>(null)
 
+    /**
+     * Set when this screen finishes or discards the session itself. Navigation then follows the
+     * event; without the flag the database update could close the screen first and the summary
+     * event would be lost with it.
+     */
+    private val leaving = MutableStateFlow(false)
+
     private val _events = Channel<ActiveWorkoutEvent>(Channel.BUFFERED)
     val events: Flow<ActiveWorkoutEvent> = _events.receiveAsFlow()
 
@@ -103,14 +110,15 @@ class ActiveWorkoutViewModel @Inject constructor(
         .onStart { emit(null) }
 
     val state: StateFlow<ActiveWorkoutUiState> = combine(
-        session,
+        combine(session, leaving, ::Pair),
         lastPerformance,
         technique,
         settingsRepository.settings,
         extraSetFor,
-    ) { session, last, technique, settings, extraFor ->
+    ) { (session, leaving), last, technique, settings, extraFor ->
         if (session == null || session.status == SessionStatus.COMPLETED) {
-            return@combine ActiveWorkoutUiState(loading = false, closed = true)
+            // Closed elsewhere (e.g. from Home) → leave; closed by us → wait for the event.
+            return@combine ActiveWorkoutUiState(loading = leaving, closed = !leaving)
         }
         val current = WorkoutFlow.currentExercise(session)
         val step = WorkoutFlow.step(session, extraSetRequested = current != null && extraFor == current.id)
@@ -211,11 +219,13 @@ class ActiveWorkoutViewModel @Inject constructor(
     }
 
     fun finish() = launch {
+        leaving.value = true
         workoutRepository.finishSession(sessionId, clock.instant())
         _events.send(ActiveWorkoutEvent.Finished(sessionId))
     }
 
     fun discard() = launch {
+        leaving.value = true
         workoutRepository.deleteSession(sessionId)
         _events.send(ActiveWorkoutEvent.Discarded)
     }

@@ -12,7 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -55,7 +55,7 @@ fun LineChart(
 ) {
     if (points.isEmpty()) return
     val sorted = remember(points) { points.sortedBy { it.x } }
-    var selected by remember(sorted) { mutableStateOf(sorted.lastIndex) }
+    var selected by remember(sorted) { mutableIntStateOf(sorted.lastIndex) }
     val colors = ChartColors.current()
     val measurer = rememberTextMeasurer()
     val axisStyle = MaterialTheme.typography.labelSmall.merge(NumberTextStyle).copy(color = colors.axisText)

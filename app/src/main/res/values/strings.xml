@@ -13,12 +13,6 @@
     <string name="action_more">Ще</string>
     <string name="action_move_up">Вгору</string>
     <string name="action_move_down">Вниз</string>
-    <string name="unit_cm">см</string>
-    <string name="unit_percent">%</string>
-    <string name="seconds_short">%1$d с</string>
-    <string name="decrease">Зменшити</string>
-    <string name="increase">Збільшити</string>
-    <string name="no_data_yet">Ще немає даних</string>
 
     <!-- Navigation -->
     <string name="nav_home">Головна</string>
@@ -130,9 +124,7 @@
     <string name="summary_duration">Тривалість</string>
     <string name="summary_sets">Підходи</string>
     <string name="summary_volume">Обʼєм</string>
-    <string name="summary_exercises">Вправи</string>
     <string name="summary_notes">Нотатка до тренування</string>
-    <string name="summary_best_set">Найкращий: %1$s</string>
     <string name="summary_skipped">пропущено</string>
     <string name="summary_record_weight">Рекорд ваги</string>
     <string name="summary_record_1rm">Рекорд 1ПМ</string>

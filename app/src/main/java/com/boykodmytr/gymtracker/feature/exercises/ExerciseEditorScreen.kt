@@ -47,7 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -69,7 +69,7 @@ fun ExerciseEditorScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
     var name by rememberSaveable { mutableStateOf("") }
     var notes by rememberSaveable { mutableStateOf("") }
     var initialized by rememberSaveable { mutableStateOf(false) }
@@ -87,11 +87,11 @@ fun ExerciseEditorScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                ExerciseEditorEvent.Saved -> snackbar.showSnackbar(context.getString(R.string.exercise_saved))
+                ExerciseEditorEvent.Saved -> snackbar.showSnackbar(resources.getString(R.string.exercise_saved))
                 ExerciseEditorEvent.Deleted -> onBack()
-                ExerciseEditorEvent.ImageFailed -> snackbar.showSnackbar(context.getString(R.string.exercise_image_failed))
+                ExerciseEditorEvent.ImageFailed -> snackbar.showSnackbar(resources.getString(R.string.exercise_image_failed))
                 is ExerciseEditorEvent.InUse -> snackbar.showSnackbar(
-                    context.getString(R.string.exercise_in_use, event.templates, event.history),
+                    resources.getString(R.string.exercise_in_use, event.templates, event.history),
                 )
             }
         }

@@ -1,6 +1,6 @@
 package com.boykodmytr.gymtracker.data.repository
 
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.boykodmytr.gymtracker.core.common.newId
 import com.boykodmytr.gymtracker.core.database.AppDatabase
@@ -80,7 +80,7 @@ class ExerciseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addImage(exerciseId: String, sourceUri: String) {
-        val fileName = imageStorage.import(Uri.parse(sourceUri))
+        val fileName = imageStorage.import(sourceUri.toUri())
         exerciseDao.insertImage(
             ExerciseImageEntity(
                 id = newId(),

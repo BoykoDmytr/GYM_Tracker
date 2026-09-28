@@ -17,7 +17,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -83,7 +83,7 @@ fun StatsScreen(
             item(key = "weekly") {
                 SectionCard(title = stringResource(R.string.stats_weekly_title)) {
                     val weekLabel = stringResource(R.string.stats_week_of)
-                    val resources = LocalContext.current.resources
+                    val resources = LocalResources.current
                     BarChart(
                         bars = stats.weeklyCounts.map {
                             BarDatum(
