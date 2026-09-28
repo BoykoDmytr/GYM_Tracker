@@ -2,7 +2,12 @@ package com.boykodmytr.gymtracker.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
@@ -43,7 +48,7 @@ fun SectionCard(
     }
 }
 
-/** A single headline number with a label, for summary rows. */
+/** A single headline number with a label. Put tiles in a [StatRow] so they share one height. */
 @Composable
 fun StatTile(
     label: String,
@@ -51,7 +56,7 @@ fun StatTile(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
@@ -86,4 +91,14 @@ fun EmptyState(
         )
         action?.invoke()
     }
+}
+
+/** Row of [StatTile]s with equal heights even when one label wraps. */
+@Composable
+fun StatRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
 }

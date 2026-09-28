@@ -117,6 +117,7 @@ internal fun SessionSummaryRow.toDomain() = SessionSummary(
 )
 
 internal fun ExerciseSetRow.toDomain() = ExerciseSetRecord(
+    exerciseId = exerciseId,
     sessionId = sessionId,
     date = date,
     startedAt = startedAt,

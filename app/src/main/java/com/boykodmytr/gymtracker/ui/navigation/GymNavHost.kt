@@ -9,7 +9,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.boykodmytr.gymtracker.domain.model.BuiltInMeasurementTypes
+import com.boykodmytr.gymtracker.feature.history.HistoryScreen
+import com.boykodmytr.gymtracker.feature.history.SessionDetailScreen
 import com.boykodmytr.gymtracker.feature.home.HomeScreen
+import com.boykodmytr.gymtracker.feature.stats.ExerciseProgressScreen
+import com.boykodmytr.gymtracker.feature.stats.StatsScreen
 import com.boykodmytr.gymtracker.feature.timer.TimerScreen
 import com.boykodmytr.gymtracker.feature.workout.active.ActiveWorkoutScreen
 import com.boykodmytr.gymtracker.feature.workout.preview.WorkoutPreviewScreen
@@ -52,11 +57,31 @@ fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable<WorkoutSummaryRoute> {
             WorkoutSummaryScreen(onDone = { if (!navController.popBackStack()) navController.navigate(HomeRoute) })
         }
-        composable<HistoryRoute> { Placeholder("History") }
-        composable<StatsRoute> { Placeholder("Stats") }
+        composable<HistoryRoute> {
+            HistoryScreen(onOpenSession = { navController.navigate(SessionDetailRoute(it)) })
+        }
+        composable<SessionDetailRoute> {
+            SessionDetailScreen(
+                onBack = { navController.popBackStack() },
+                onOpenExerciseProgress = { navController.navigate(ExerciseProgressRoute(it)) },
+            )
+        }
+        composable<StatsRoute> {
+            StatsScreen(
+                onOpenExercise = { navController.navigate(ExerciseProgressRoute(it)) },
+                onOpenBodyWeight = { navController.navigate(MeasurementDetailRoute(BuiltInMeasurementTypes.WEIGHT)) },
+            )
+        }
+        composable<ExerciseProgressRoute> {
+            ExerciseProgressScreen(
+                onBack = { navController.popBackStack() },
+                onEditExercise = { navController.navigate(ExerciseEditorRoute(it)) },
+                onOpenSession = { navController.navigate(SessionDetailRoute(it)) },
+            )
+        }
         composable<ProgramsRoute> { Placeholder("Programs") }
         composable<ProfileRoute> { Placeholder("Profile") }
-        composable<SessionDetailRoute> { Placeholder("Session") }
+        composable<MeasurementDetailRoute> { Placeholder("Measurement") }
         composable<ExerciseEditorRoute> { Placeholder("Exercise") }
         composable<SettingsRoute> { Placeholder("Settings") }
         composable<TimerRoute> { TimerScreen(onBack = { navController.popBackStack() }) }

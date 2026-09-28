@@ -95,6 +95,7 @@ data class SessionSummary(
 
 /** One logged set of a specific exercise together with the session it belongs to. */
 data class ExerciseSetRecord(
+    val exerciseId: String,
     val sessionId: String,
     val date: LocalDate,
     val startedAt: Instant,

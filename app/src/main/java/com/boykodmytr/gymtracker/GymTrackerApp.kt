@@ -1,7 +1,9 @@
 package com.boykodmytr.gymtracker
 
 import android.app.Application
+import android.content.Context
 import com.boykodmytr.gymtracker.core.common.ApplicationScope
+import com.boykodmytr.gymtracker.core.common.withAppLocale
 import com.boykodmytr.gymtracker.core.notifications.ActiveWorkoutMonitor
 import com.boykodmytr.gymtracker.core.notifications.NotificationChannels
 import com.boykodmytr.gymtracker.core.notifications.ReminderSync
@@ -20,6 +22,10 @@ class GymTrackerApp : Application() {
 
     @Inject @ApplicationScope
     lateinit var appScope: CoroutineScope
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base.withAppLocale())
+    }
 
     override fun onCreate() {
         super.onCreate()

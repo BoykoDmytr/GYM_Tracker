@@ -38,5 +38,6 @@ interface WorkoutRepository {
     /** Sets from the most recent completed workout that contained this exercise. */
     suspend fun lastPerformance(exerciseId: String, excludeSessionId: String? = null): List<SetLog>
     fun observeExerciseRecords(exerciseId: String): Flow<List<ExerciseSetRecord>>
+    fun observeAllExerciseRecords(): Flow<List<ExerciseSetRecord>>
     fun observeExercisesWithHistory(): Flow<List<ExerciseHistoryEntry>>
 }

@@ -37,6 +37,7 @@ import com.boykodmytr.gymtracker.R
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
 import com.boykodmytr.gymtracker.ui.components.BigButton
 import com.boykodmytr.gymtracker.ui.components.SectionCard
+import com.boykodmytr.gymtracker.ui.components.StatRow
 import com.boykodmytr.gymtracker.ui.components.StatTile
 import com.boykodmytr.gymtracker.ui.format.Fmt
 import com.boykodmytr.gymtracker.ui.format.setsSummary
@@ -86,7 +87,7 @@ fun WorkoutSummaryScreen(
                 )
             }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatRow {
                     StatTile(stringResource(R.string.summary_duration), session.duration?.let(Fmt::clock) ?: "–", Modifier.weight(1f))
                     StatTile(stringResource(R.string.summary_sets), session.totalSets.toString(), Modifier.weight(1f))
                     StatTile(stringResource(R.string.summary_volume), Fmt.volume(session.totalVolumeKg, unit), Modifier.weight(1f))

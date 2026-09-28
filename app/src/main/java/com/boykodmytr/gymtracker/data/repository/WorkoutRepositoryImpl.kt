@@ -181,6 +181,9 @@ class WorkoutRepositoryImpl @Inject constructor(
     override fun observeExerciseRecords(exerciseId: String): Flow<List<ExerciseSetRecord>> =
         workoutDao.observeExerciseSets(exerciseId).map { rows -> rows.map { it.toDomain() } }
 
+    override fun observeAllExerciseRecords(): Flow<List<ExerciseSetRecord>> =
+        workoutDao.observeAllExerciseSets().map { rows -> rows.map { it.toDomain() } }
+
     override fun observeExercisesWithHistory(): Flow<List<ExerciseHistoryEntry>> =
         workoutDao.observeExercisesWithHistory().map { rows -> rows.map { it.toDomain() } }
 }

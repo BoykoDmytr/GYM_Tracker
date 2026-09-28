@@ -64,6 +64,7 @@ data class SessionSummaryRow(
 )
 
 data class ExerciseSetRow(
+    @ColumnInfo(name = "exercise_id") val exerciseId: String,
     @ColumnInfo(name = "session_id") val sessionId: String,
     val date: LocalDate,
     @ColumnInfo(name = "started_at") val startedAt: Instant,

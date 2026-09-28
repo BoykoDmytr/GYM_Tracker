@@ -14,6 +14,7 @@ import java.time.LocalDate
 class ProgressMathTest {
 
     private fun record(session: String, day: Int, weight: Double, reps: Int, n: Int = 1) = ExerciseSetRecord(
+        exerciseId = "bench",
         sessionId = session,
         date = LocalDate.of(2026, 9, day),
         startedAt = T0.plusSeconds(day * 86_400L),

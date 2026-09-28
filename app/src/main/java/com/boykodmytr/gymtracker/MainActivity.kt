@@ -1,5 +1,6 @@
 package com.boykodmytr.gymtracker
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -13,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.boykodmytr.gymtracker.core.common.withAppLocale
 import com.boykodmytr.gymtracker.domain.model.ThemeMode
 import com.boykodmytr.gymtracker.ui.GymTrackerAppUi
 import com.boykodmytr.gymtracker.ui.components.LocalClock
@@ -27,6 +29,10 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     @Inject lateinit var clock: Clock
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase.withAppLocale())
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

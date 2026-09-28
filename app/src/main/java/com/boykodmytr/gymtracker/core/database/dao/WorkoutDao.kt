@@ -120,8 +120,8 @@ interface WorkoutDao {
 
     @Query(
         """
-        SELECT s.id AS session_id, s.date AS date, s.started_at AS started_at, l.set_number AS set_number,
-            l.weight_kg AS weight_kg, l.reps AS reps, l.rpe AS rpe, l.is_failure AS is_failure
+        SELECT se.exercise_id AS exercise_id, s.id AS session_id, s.date AS date, s.started_at AS started_at,
+            l.set_number AS set_number, l.weight_kg AS weight_kg, l.reps AS reps, l.rpe AS rpe, l.is_failure AS is_failure
         FROM set_log l
         JOIN session_exercise se ON se.id = l.session_exercise_id
         JOIN workout_session s ON s.id = se.session_id
@@ -130,6 +130,19 @@ interface WorkoutDao {
         """,
     )
     fun observeExerciseSets(exerciseId: String): Flow<List<ExerciseSetRow>>
+
+    @Query(
+        """
+        SELECT se.exercise_id AS exercise_id, s.id AS session_id, s.date AS date, s.started_at AS started_at,
+            l.set_number AS set_number, l.weight_kg AS weight_kg, l.reps AS reps, l.rpe AS rpe, l.is_failure AS is_failure
+        FROM set_log l
+        JOIN session_exercise se ON se.id = l.session_exercise_id
+        JOIN workout_session s ON s.id = se.session_id
+        WHERE s.status = 'COMPLETED'
+        ORDER BY s.started_at, l.set_number
+        """,
+    )
+    fun observeAllExerciseSets(): Flow<List<ExerciseSetRow>>
 
     @Query(
         """

@@ -37,6 +37,7 @@ import com.boykodmytr.gymtracker.ui.components.BigButton
 import com.boykodmytr.gymtracker.ui.components.EmptyState
 import com.boykodmytr.gymtracker.ui.components.SecondaryButton
 import com.boykodmytr.gymtracker.ui.components.SectionCard
+import com.boykodmytr.gymtracker.ui.components.StatRow
 import com.boykodmytr.gymtracker.ui.components.StatTile
 import com.boykodmytr.gymtracker.ui.components.rememberNow
 import com.boykodmytr.gymtracker.ui.format.Fmt
@@ -112,7 +113,7 @@ private fun HomeContent(
                 item(key = "plan") { PlanCard(state.plan, state.today, onStartWorkout, onOpenPrograms) }
             }
             item(key = "stats") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatRow {
                     StatTile(
                         label = stringResource(R.string.home_this_week),
                         value = stringResource(R.string.home_week_value, state.weekDone, state.weekTarget),

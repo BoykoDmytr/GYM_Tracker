@@ -82,6 +82,9 @@ object Fmt {
         }
     }
 
+    /** Compact duration for tiles: "62 хв". */
+    fun minutes(duration: Duration): String = "${duration.toMinutes().coerceAtLeast(0)} хв"
+
     fun restLabel(seconds: Int): String = if (seconds % 60 == 0) "${seconds / 60} хв" else if (seconds < 60) "$seconds с" else clockSeconds(seconds.toLong())
 
     fun dayMonth(date: LocalDate): String = dayMonth.format(date)

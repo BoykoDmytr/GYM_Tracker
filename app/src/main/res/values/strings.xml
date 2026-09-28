@@ -137,6 +137,50 @@
     <string name="summary_record_weight">Рекорд ваги</string>
     <string name="summary_record_1rm">Рекорд 1ПМ</string>
 
+    <!-- History -->
+    <string name="history_previous_month">Попередній місяць</string>
+    <string name="history_next_month">Наступний місяць</string>
+    <string name="history_legend_done">Виконано</string>
+    <string name="history_legend_planned">Заплановано</string>
+    <string name="history_legend_missed">Пропущено</string>
+    <string name="history_missed_count">пропущено: %1$d</string>
+    <string name="history_month_workouts">Тренування за місяць</string>
+    <string name="history_empty">Немає тренувань</string>
+    <string name="history_day_missed">Цього дня тренування було заплановано, але пропущено</string>
+    <string name="session_delete">Видалити тренування</string>
+    <string name="session_delete_title">Видалити тренування?</string>
+    <string name="session_delete_text">Тренування і всі його підходи буде видалено з історії та статистики. Це не можна скасувати.</string>
+    <string name="session_exercise_progress">Прогрес у вправі</string>
+    <string name="session_plan">План: %1$s</string>
+
+    <!-- Statistics -->
+    <string name="stats_this_month">Цього місяця</string>
+    <string name="stats_total">Усього</string>
+    <string name="stats_avg_duration">Сер. тривалість</string>
+    <string name="stats_month_volume">Обʼєм за місяць</string>
+    <string name="stats_missed_30">Пропущено за 30 днів</string>
+    <string name="stats_totals_line">Серія: %1$s поспіль · загальний обʼєм %2$s · час у залі %3$s · пропущено всього: %4$d</string>
+    <string name="stats_weekly_title">Тренування по тижнях</string>
+    <string name="stats_week_of">тиждень з %1$s</string>
+    <string name="stats_target">ціль</string>
+    <string name="stats_body_weight">Вага тіла</string>
+    <string name="stats_body_weight_empty">Ще немає вимірювань ваги.</string>
+    <string name="stats_add_weight">Додати вагу</string>
+    <string name="stats_exercises_title">Прогрес у вправах</string>
+    <string name="stats_exercises_empty">Прогрес зʼявиться після першого завершеного тренування</string>
+    <string name="stats_max_reps">максимум %1$d повторень</string>
+    <string name="progress_empty">Ще немає завершених підходів у цій вправі</string>
+    <string name="progress_metric_weight">Макс. вага</string>
+    <string name="progress_metric_1rm">1ПМ (оцінка)</string>
+    <string name="progress_metric_volume">Обʼєм</string>
+    <string name="progress_metric_reps">Повторення</string>
+    <string name="progress_1rm_note">Оцінка максимуму на 1 повторення за формулою Еплі — орієнтир для порівняння, а не результат тесту.</string>
+    <string name="progress_weight_path">Робоча вага</string>
+    <string name="progress_record_weight">Макс. вага</string>
+    <string name="progress_record_1rm">Кращий 1ПМ</string>
+    <string name="progress_record_reps">Макс. повторень</string>
+    <string name="progress_history">Історія</string>
+
     <!-- Timer -->
     <string name="timer_title">Таймер</string>
     <string name="timer_countdown">Таймер</string>
