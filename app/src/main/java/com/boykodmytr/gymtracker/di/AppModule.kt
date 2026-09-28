@@ -30,10 +30,6 @@ import javax.inject.Singleton
 object AppModule {
 
     @Provides
-    @Singleton
-    fun provideClock(): Clock = Clock.systemDefaultZone()
-
-    @Provides
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
@@ -41,11 +37,23 @@ object AppModule {
     @Singleton
     @ApplicationScope
     fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+}
 
+@Module
+@InstallIn(SingletonComponent::class)
+object DataStoreModule {
     @Provides
     @Singleton
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("settings") }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object ClockModule {
+    @Provides
+    @Singleton
+    fun provideClock(): Clock = Clock.systemDefaultZone()
 }
 
 @Module

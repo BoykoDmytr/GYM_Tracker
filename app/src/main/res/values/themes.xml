@@ -1,3 +1,6 @@
 <resources>
-    <style name="Theme.GymTracker" parent="android:Theme.Material.NoActionBar" />
+    <!-- Window background matches the Compose theme so there is no white flash before the first frame. -->
+    <style name="Theme.GymTracker" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

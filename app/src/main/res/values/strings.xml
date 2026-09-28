@@ -1,3 +1,164 @@
 <resources>
     <string name="app_name">Gym Tracker</string>
+
+    <!-- Common -->
+    <string name="action_save">Зберегти</string>
+    <string name="action_cancel">Скасувати</string>
+    <string name="action_delete">Видалити</string>
+    <string name="action_edit">Редагувати</string>
+    <string name="action_done">Готово</string>
+    <string name="action_back">Назад</string>
+    <string name="action_add">Додати</string>
+    <string name="action_close">Закрити</string>
+    <string name="action_more">Ще</string>
+    <string name="action_move_up">Вгору</string>
+    <string name="action_move_down">Вниз</string>
+    <string name="unit_cm">см</string>
+    <string name="unit_percent">%</string>
+    <string name="seconds_short">%1$d с</string>
+    <string name="decrease">Зменшити</string>
+    <string name="increase">Збільшити</string>
+    <string name="no_data_yet">Ще немає даних</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Головна</string>
+    <string name="nav_history">Історія</string>
+    <string name="nav_stats">Статистика</string>
+    <string name="nav_programs">Програми</string>
+    <string name="nav_profile">Профіль</string>
+
+    <!-- Home -->
+    <string name="home_today_training">Сьогодні тренування</string>
+    <string name="home_rest_day">Сьогодні день відпочинку</string>
+    <string name="home_next_workout">Найближче тренування</string>
+    <string name="home_next_workout_date">%1$s, %2$s</string>
+    <string name="home_start_workout">Почати тренування</string>
+    <string name="home_start_anyway">Почати позапланове тренування</string>
+    <string name="home_done_today">Сьогодні тренування виконано</string>
+    <string name="home_active_session">Тренування триває</string>
+    <string name="home_continue">Продовжити</string>
+    <string name="home_stale_session">Незавершене тренування від %1$s</string>
+    <string name="home_finish_stale">Завершити й зберегти</string>
+    <string name="home_this_week">Цього тижня</string>
+    <string name="home_week_value">%1$d з %2$d</string>
+    <string name="home_streak">Серія тижнів</string>
+    <string name="home_total">Усього</string>
+    <string name="home_last_workout">Останнє тренування</string>
+    <string name="home_no_program">Немає активної програми</string>
+    <string name="home_no_program_hint">Відкрий «Програми» і вибери або створи програму.</string>
+    <string name="home_no_workouts">У програмі ще немає тренувань</string>
+    <string name="home_no_schedule">Дні тренувань не налаштовано</string>
+    <string name="home_timer">Таймер</string>
+    <string name="home_settings">Налаштування</string>
+    <string name="home_open_programs">Відкрити програми</string>
+    <string name="home_sets_done">Виконано підходів: %1$d</string>
+
+    <!-- Workout preview -->
+    <string name="preview_title">Тренування</string>
+    <string name="preview_start">Почати</string>
+    <string name="preview_last_time">Минулого разу: %1$s</string>
+    <string name="preview_session_in_progress">Уже є незавершене тренування: %1$s</string>
+    <string name="preview_continue_session">Продовжити незавершене</string>
+    <string name="preview_rest">відпочинок %1$s</string>
+    <string name="preview_empty">У цьому тренуванні ще немає вправ. Додай їх у розділі «Програми».</string>
+
+    <!-- Active workout -->
+    <string name="workout_finish">Завершити</string>
+    <string name="workout_finish_workout">Завершити тренування</string>
+    <string name="workout_exercises">Вправи</string>
+    <string name="workout_discard">Скасувати тренування</string>
+    <string name="workout_discard_title">Скасувати тренування?</string>
+    <string name="workout_discard_text">Тренування і всі записані підходи буде видалено без збереження в історії.</string>
+    <string name="workout_finish_title">Завершити тренування?</string>
+    <string name="workout_finish_text">Результати буде збережено в історії.</string>
+    <string name="workout_finish_unfinished">Деякі вправи не виконані до кінця. Їх буде позначено як пропущені або частково виконані.</string>
+    <string name="workout_finish_empty">Ти ще не записав жодного підходу. Скасувати тренування замість збереження?</string>
+    <string name="workout_exercise_progress">Вправа %1$d з %2$d</string>
+    <string name="workout_set_of">Підхід %1$d / %2$d</string>
+    <string name="workout_extra_set">Додатковий підхід %1$d</string>
+    <string name="workout_optional">необовʼязковий</string>
+    <string name="workout_plan">Заплановано</string>
+    <string name="workout_plan_reps">%1$s повторень</string>
+    <string name="workout_plan_weight">%1$s</string>
+    <string name="workout_plan_no_weight">вага на твій вибір</string>
+    <string name="workout_last_time">Минулого разу</string>
+    <string name="workout_hint_increase">Минулого разу всі підходи на верхній межі — можна додати вагу.</string>
+    <string name="workout_hint_reps">Тримай вагу %1$s і додавай повторення до верхньої межі.</string>
+    <string name="workout_complete_set">Завершити підхід</string>
+    <string name="workout_skip_exercise">Пропустити вправу</string>
+    <string name="workout_complete_exercise">Завершити вправу</string>
+    <string name="workout_exercise_done">Вправу завершено</string>
+    <string name="workout_exercise_skipped">Вправу пропущено</string>
+    <string name="workout_next_exercise">Наступна вправа</string>
+    <string name="workout_next_is">Далі: %1$s</string>
+    <string name="workout_all_done">Усі вправи виконано!</string>
+    <string name="workout_add_set">Ще підхід</string>
+    <string name="workout_logged_sets">Виконані підходи</string>
+    <string name="workout_technique">Техніка</string>
+    <string name="workout_rest">Відпочинок</string>
+    <string name="workout_rest_over">Відпочинок завершено — час для наступного підходу</string>
+    <string name="workout_rest_skip">Пропустити</string>
+    <string name="workout_rest_minus">−15 с</string>
+    <string name="workout_rest_plus">+15 с</string>
+    <string name="workout_start_rest">Почати відпочинок</string>
+    <string name="workout_back_home">На головну (тренування триває)</string>
+    <string name="workout_status_done">виконано</string>
+    <string name="workout_status_skipped">пропущено</string>
+    <string name="workout_status_current">зараз</string>
+    <string name="workout_sets_progress">%1$d/%2$d</string>
+    <string name="workout_no_technique">Для цієї вправи ще немає опису чи фото. Додай їх у бібліотеці вправ.</string>
+    <string name="workout_edit_exercise">Редагувати вправу</string>
+
+    <!-- Set input -->
+    <string name="set_result_title">Підхід %1$d — результат</string>
+    <string name="set_edit_title">Редагувати підхід %1$d</string>
+    <string name="set_weight">Вага, %1$s</string>
+    <string name="set_reps">Повторення</string>
+    <string name="set_more_options">RPE, відмова, примітка</string>
+    <string name="set_rpe">RPE (наскільки важко, 6–10)</string>
+    <string name="set_failure">Підхід до відмови</string>
+    <string name="set_note">Примітка</string>
+    <string name="set_delete">Видалити підхід</string>
+    <string name="set_invalid">Введи вагу (0 для власної ваги) і кількість повторень більше нуля</string>
+    <string name="set_row">%1$s × %2$d</string>
+    <string name="set_rpe_short">RPE %1$s</string>
+    <string name="set_failure_short">відмова</string>
+    <string name="set_bodyweight">власна вага</string>
+
+    <!-- Summary -->
+    <string name="summary_title">Тренування завершено</string>
+    <string name="summary_duration">Тривалість</string>
+    <string name="summary_sets">Підходи</string>
+    <string name="summary_volume">Обʼєм</string>
+    <string name="summary_exercises">Вправи</string>
+    <string name="summary_notes">Нотатка до тренування</string>
+    <string name="summary_best_set">Найкращий: %1$s</string>
+    <string name="summary_skipped">пропущено</string>
+    <string name="summary_record_weight">Рекорд ваги</string>
+    <string name="summary_record_1rm">Рекорд 1ПМ</string>
+
+    <plurals name="exercises_count">
+        <item quantity="one">%d вправа</item>
+        <item quantity="few">%d вправи</item>
+        <item quantity="many">%d вправ</item>
+        <item quantity="other">%d вправи</item>
+    </plurals>
+    <plurals name="sets_count">
+        <item quantity="one">%d підхід</item>
+        <item quantity="few">%d підходи</item>
+        <item quantity="many">%d підходів</item>
+        <item quantity="other">%d підходу</item>
+    </plurals>
+    <plurals name="workouts_count">
+        <item quantity="one">%d тренування</item>
+        <item quantity="few">%d тренування</item>
+        <item quantity="many">%d тренувань</item>
+        <item quantity="other">%d тренування</item>
+    </plurals>
+    <plurals name="weeks_count">
+        <item quantity="one">%d тиждень</item>
+        <item quantity="few">%d тижні</item>
+        <item quantity="many">%d тижнів</item>
+        <item quantity="other">%d тижня</item>
+    </plurals>
 </resources>
