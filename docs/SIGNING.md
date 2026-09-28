@@ -38,8 +38,10 @@ Android оновлює застосунок лише тоді, коли нова
 вийде встановити поверх — лише з видаленням даних. Не клади файл у репозиторій (`*.p12` уже в
 `.gitignore`).
 
-Якщо ключ створено в Android Studio (*Build → Generate Signed App Bundle or APK*) з іншим alias або
-окремим паролем ключа, додай ще секрети `SIGNING_KEY_ALIAS` і `SIGNING_KEY_PASSWORD`.
+Ключ можна створити й в Android Studio (*Build → Generate Signed App Bundle or APK → Create new*):
+назву ключа (alias) збірка визначить сама, якщо він у файлі один. Якщо там задано окремий пароль
+ключа, відмінний від пароля файлу, додай ще секрет `SIGNING_KEY_PASSWORD`. Якщо щось не так
+(пароль, base64 чи назва), крок *Decode the release signing key* у запуску прямо напише, що саме.
 
 ## Встановлення на телефон
 

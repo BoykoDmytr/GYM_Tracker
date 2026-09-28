@@ -49,18 +49,13 @@ jobs:
         env:
           SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
-        run: |
-          printf '%s' "$SIGNING_KEYSTORE_BASE64" | base64 --decode --ignore-garbage > "$RUNNER_TEMP/release-key.p12"
-          if ! keytool -list -keystore "$RUNNER_TEMP/release-key.p12" -storepass:env SIGNING_KEYSTORE_PASSWORD > /dev/null 2>&1; then
-            echo "::error::Не вдалося відкрити ключ підпису. Перевір секрети SIGNING_KEYSTORE_BASE64 і SIGNING_KEYSTORE_PASSWORD (docs/SIGNING.md)."
-            exit 1
-          fi
-          echo "SIGNING_KEYSTORE_FILE=$RUNNER_TEMP/release-key.p12" >> "$GITHUB_ENV"
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+        # Exports SIGNING_KEYSTORE_FILE and SIGNING_KEY_ALIAS (auto-detected when the file holds one key).
+        run: bash .github/scripts/decode-signing-key.sh
 
       - name: Build release APK
         env:
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease
 
