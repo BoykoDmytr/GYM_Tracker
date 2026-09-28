@@ -3,7 +3,10 @@ package com.boykodmytr.gymtracker.ui
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.isDialog
@@ -16,8 +19,20 @@ import java.io.File
 import java.io.FileOutputStream
 
 fun ComposeTestRule.waitForText(text: String, substring: Boolean = false, timeoutMillis: Long = 5_000) {
-    waitUntil(timeoutMillis) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
+    try {
+        waitUntil(timeoutMillis) {
+            onAllNodesWithText(text, substring = substring, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+    } catch (e: ComposeTimeoutException) {
+        // Dump every window so a failure shows what was on screen instead of just "timed out".
+        val roots = onAllNodes(isRoot())
+        repeat(roots.fetchSemanticsNodes().size) { println(roots[it].printToString()) }
+        throw AssertionError("Text not found: \"$text\"", e)
+    }
 }
+
+/** The screen's vertical scroller (ignores horizontal chip rows). */
+val verticalScroller: SemanticsMatcher = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.waitForNoText(text: String, timeoutMillis: Long = 5_000) {

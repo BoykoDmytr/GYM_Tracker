@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.hasScrollAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.boykodmytr.gymtracker.MainActivity
 import com.boykodmytr.gymtracker.core.database.AppDatabase
@@ -63,7 +62,7 @@ class HistoryStatsUiTest {
     }
 
     @Test
-    fun historyCalendarAndSessionDetail() = with(composeRule) {
+    fun historyCalendarAndSessionDetail(): Unit = with(composeRule) {
         waitForText("Сьогодні тренування")
         screenshot("10_home_with_history")
 
@@ -75,7 +74,7 @@ class HistoryStatsUiTest {
         onNodeWithContentDescription("пʼятниця, 25 вересня, Виконано").performClick()
         waitForText("Пʼятниця, 25 вересня")
         onAllNodesWithText("Full Body", substring = true).onFirst().assertExists()
-        onNode(hasScrollAction()).performScrollToNode(hasText("18:05", substring = true))
+        onNode(verticalScroller).performScrollToNode(hasText("18:05", substring = true))
         onAllNodesWithText("18:05", substring = true).onFirst().performClick()
 
         waitForText("Жим штанги лежачи")
@@ -83,13 +82,13 @@ class HistoryStatsUiTest {
     }
 
     @Test
-    fun statisticsAndExerciseProgress() = with(composeRule) {
+    fun statisticsAndExerciseProgress(): Unit = with(composeRule) {
         waitForText("Сьогодні тренування")
         onNodeWithText("Статистика").performClick()
         waitForText("Тренування по тижнях")
         screenshot("13_stats_top")
 
-        onNode(hasScrollAction()).performScrollToNode(hasText("Жим штанги лежачи"))
+        onNode(verticalScroller).performScrollToNode(hasText("Жим штанги лежачи"))
         screenshot("14_stats_exercises")
         onNodeWithText("Жим штанги лежачи").performClick()
 

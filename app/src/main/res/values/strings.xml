@@ -181,6 +181,109 @@
     <string name="progress_record_reps">Макс. повторень</string>
     <string name="progress_history">Історія</string>
 
+    <!-- Programs -->
+    <string name="programs_library">Вправи</string>
+    <string name="programs_new">Нова програма</string>
+    <string name="programs_name">Назва</string>
+    <string name="programs_description">Опис</string>
+    <string name="programs_active">Активна</string>
+    <string name="programs_active_long">Активна програма — тренування на головному екрані беруться з неї</string>
+    <string name="programs_make_active">Зробити активною</string>
+    <string name="programs_rotation_hint">Тренування йдуть по черзі в цьому порядку незалежно від дня тижня: якщо пропустити день, наступним буде те, що не виконано.</string>
+    <string name="programs_workout_empty">Ще немає вправ</string>
+    <string name="programs_add_workout">Додати тренування</string>
+    <string name="programs_workout_name">Назва тренування</string>
+    <string name="programs_edit">Редагувати програму</string>
+    <string name="programs_delete_title">Видалити програму?</string>
+    <string name="programs_delete_text">Програму і її тренування буде видалено. Історія виконаних тренувань залишиться.</string>
+    <string name="template_rename">Перейменувати</string>
+    <string name="template_rest_default">відпочинок %1$s (типовий)</string>
+    <string name="template_remove_exercise">Прибрати з тренування</string>
+    <string name="template_add_exercise">Додати вправу</string>
+    <string name="template_delete_title">Видалити тренування?</string>
+    <string name="template_delete_text">Тренування буде видалено з програми. Історія виконаних тренувань залишиться.</string>
+    <string name="target_sets">Підходи</string>
+    <string name="target_reps">Повторення</string>
+    <string name="target_from">від</string>
+    <string name="target_to">до</string>
+    <string name="target_weight">Запланована вага, %1$s</string>
+    <string name="target_weight_hint">необовʼязково</string>
+    <string name="target_rest">Відпочинок, секунд</string>
+    <string name="target_rest_hint">типовий: %1$d</string>
+    <string name="target_notes">Примітка (напр. хват, темп)</string>
+    <string name="target_invalid">Перевір значення: «від» не більше «до», усе більше нуля, відпочинок 5–3600 с</string>
+
+    <!-- Exercise library -->
+    <string name="library_title">Бібліотека вправ</string>
+    <string name="library_pick_title">Вибери вправу</string>
+    <string name="library_new">Нова вправа</string>
+    <string name="library_search">Пошук</string>
+    <string name="library_empty">Нічого не знайдено</string>
+    <string name="exercise_new">Нова вправа</string>
+    <string name="exercise_edit">Вправа</string>
+    <string name="exercise_name">Назва</string>
+    <string name="exercise_notes">Техніка та нотатки</string>
+    <string name="exercise_notes_hint">Напр.: лопатки зведені, гриф до низу грудей, лікті під 45°</string>
+    <string name="exercise_photos">Фото техніки</string>
+    <string name="exercise_photos_save_first">Спершу збережи вправу, щоб додати фото.</string>
+    <string name="exercise_photo">Фото вправи</string>
+    <string name="exercise_photo_delete">Видалити фото</string>
+    <string name="exercise_add_photo">Додати фото</string>
+    <string name="exercise_saved">Збережено</string>
+    <string name="exercise_image_failed">Не вдалося додати фото</string>
+    <string name="exercise_in_use">Вправу не можна видалити: вона є в програмах (%1$d) та в історії тренувань (%2$d). Прибери її з програм; історію не видаляємо.</string>
+    <string name="exercise_delete_title">Видалити вправу?</string>
+    <string name="exercise_delete_text">Вправу та її фото буде видалено.</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Мій профіль</string>
+    <string name="profile_edit">Редагувати профіль</string>
+    <string name="profile_name">Імʼя</string>
+    <string name="profile_no_name">Без імені</string>
+    <string name="profile_birth_date">Дата народження</string>
+    <string name="profile_birth_date_value">Народження: %1$s</string>
+    <string name="profile_height">Зріст, см</string>
+    <string name="profile_height_value">%1$s см</string>
+    <string name="profile_fill_hint">Додай дату народження та зріст</string>
+    <string name="measurements_title">Параметри тіла</string>
+    <string name="measurements_add">Записати вимірювання</string>
+    <string name="measurements_new_type">Додати свій параметр</string>
+    <string name="measurements_empty">Ще немає записів. Натисни «Додати».</string>
+    <string name="measurements_total_change">Зміна: %1$s з %2$s</string>
+    <string name="measurements_delete_type_title">Видалити параметр?</string>
+    <string name="measurements_delete_type_text">Параметр і всю його історію буде видалено.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Налаштування</string>
+    <string name="settings_permissions">Потрібна увага</string>
+    <string name="settings_notifications_off">Сповіщення вимкнені</string>
+    <string name="settings_notifications_off_hint">Без них не буде нагадувань і сигналу таймера, коли екран вимкнено. Натисни, щоб увімкнути.</string>
+    <string name="settings_exact_off">Точний час сигналів не дозволено</string>
+    <string name="settings_exact_off_hint">Android може затримати сигнал відпочинку та нагадування на кілька хвилин. Натисни і дозволь «Будильники й нагадування».</string>
+    <string name="settings_schedule">Дні та час тренувань</string>
+    <string name="settings_schedule_hint">Від цього залежать план на головному екрані, календар (пропущені дні) і нагадування.</string>
+    <string name="settings_reminders">Нагадування</string>
+    <string name="settings_reminders_hint">Сповіщення у дні тренувань у вказаний час</string>
+    <string name="settings_rest">Таймер відпочинку</string>
+    <string name="settings_default_rest">Типовий відпочинок</string>
+    <string name="settings_auto_rest">Запускати автоматично</string>
+    <string name="settings_auto_rest_hint">Після збереження підходу</string>
+    <string name="settings_sound">Звук</string>
+    <string name="settings_vibration">Вібрація</string>
+    <string name="settings_timer_channel">Сигнал у фоні</string>
+    <string name="settings_timer_channel_hint">Коли застосунок згорнуто, звук і вібрацію задає Android — налаштуй їх тут</string>
+    <string name="settings_workout">Під час тренування</string>
+    <string name="settings_keep_screen_on">Не вимикати екран</string>
+    <string name="settings_keep_screen_on_hint">Таймер видно, поки телефон лежить на лавці</string>
+    <string name="settings_units">Одиниці ваги</string>
+    <string name="settings_unit_kg">Кілограми</string>
+    <string name="settings_unit_lb">Фунти</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system">Як у системі</string>
+    <string name="settings_theme_light">Світла</string>
+    <string name="settings_theme_dark">Темна</string>
+    <string name="settings_version">Версія %1$s</string>
+
     <!-- Timer -->
     <string name="timer_title">Таймер</string>
     <string name="timer_countdown">Таймер</string>
@@ -232,6 +335,12 @@
         <item quantity="few">%d тренування</item>
         <item quantity="many">%d тренувань</item>
         <item quantity="other">%d тренування</item>
+    </plurals>
+    <plurals name="years_count">
+        <item quantity="one">%d рік</item>
+        <item quantity="few">%d роки</item>
+        <item quantity="many">%d років</item>
+        <item quantity="other">%d року</item>
     </plurals>
     <plurals name="weeks_count">
         <item quantity="one">%d тиждень</item>

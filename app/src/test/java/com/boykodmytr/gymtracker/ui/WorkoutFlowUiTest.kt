@@ -37,7 +37,7 @@ class WorkoutFlowUiTest {
     }
 
     @Test
-    fun completeWorkoutFlow() = with(composeRule) {
+    fun completeWorkoutFlow(): Unit = with(composeRule) {
         waitForText("Сьогодні тренування")
         onNodeWithText("Full Body A").assertExists()
         screenshot("01_home")
