@@ -20,6 +20,7 @@ data class ExerciseLibraryUiState(
     val query: String = "",
     val exercises: List<Exercise> = emptyList(),
     val pickMode: Boolean = false,
+    val mergeMode: Boolean = false,
 )
 
 @HiltViewModel
@@ -28,17 +29,22 @@ class ExerciseLibraryViewModel @Inject constructor(
     exerciseRepository: ExerciseRepository,
 ) : ViewModel() {
 
-    private val pickMode = savedStateHandle.toRoute<ExerciseLibraryRoute>().pickForTemplateId != null
+    private val route = savedStateHandle.toRoute<ExerciseLibraryRoute>()
+    private val pickMode = route.pickForTemplateId != null
+    private val mergeMode = route.mergeFromId != null
     private val query = MutableStateFlow("")
 
-    val state: StateFlow<ExerciseLibraryUiState> = combine(exerciseRepository.observeExercises(), query) { list, q ->
+    val state: StateFlow<ExerciseLibraryUiState> = combine(exerciseRepository.observeExercises(), query) { all, q ->
+        // An exercise cannot be merged into itself.
+        val list = all.filter { it.id != route.mergeFromId }
         ExerciseLibraryUiState(
             loading = false,
             query = q,
             exercises = if (q.isBlank()) list else list.filter { it.name.contains(q.trim(), ignoreCase = true) },
             pickMode = pickMode,
+            mergeMode = mergeMode,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExerciseLibraryUiState(pickMode = pickMode))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExerciseLibraryUiState(pickMode = pickMode, mergeMode = mergeMode))
 
     fun setQuery(value: String) {
         query.value = value

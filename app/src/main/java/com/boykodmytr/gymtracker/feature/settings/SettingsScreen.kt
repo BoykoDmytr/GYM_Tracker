@@ -62,6 +62,8 @@ import java.time.DayOfWeek
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenExport: () -> Unit,
+    onOpenImport: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -165,6 +167,11 @@ fun SettingsScreen(
                     },
                     onSelect = viewModel::setTheme,
                 )
+            }
+
+            SettingsSection(stringResource(R.string.settings_data)) {
+                ClickRow(stringResource(R.string.settings_export), onOpenExport, stringResource(R.string.settings_export_hint))
+                ClickRow(stringResource(R.string.settings_import), onOpenImport, stringResource(R.string.settings_import_hint))
             }
 
             Text(

@@ -46,14 +46,24 @@ fun ExerciseLibraryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (state.pickMode) R.string.library_pick_title else R.string.library_title)) },
+                title = {
+                    Text(
+                        stringResource(
+                            when {
+                                state.mergeMode -> R.string.library_merge_title
+                                state.pickMode -> R.string.library_pick_title
+                                else -> R.string.library_title
+                            },
+                        ),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back)) }
                 },
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            if (!state.mergeMode) ExtendedFloatingActionButton(
                 onClick = onCreate,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.library_new)) },

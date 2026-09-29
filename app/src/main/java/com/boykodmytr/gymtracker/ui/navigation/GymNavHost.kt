@@ -9,6 +9,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.boykodmytr.gymtracker.domain.model.BuiltInMeasurementTypes
+import com.boykodmytr.gymtracker.feature.data.DataExportScreen
+import com.boykodmytr.gymtracker.feature.data.DataImportScreen
 import com.boykodmytr.gymtracker.feature.exercises.ExerciseEditorScreen
 import com.boykodmytr.gymtracker.feature.exercises.ExerciseLibraryScreen
 import com.boykodmytr.gymtracker.feature.history.HistoryScreen
@@ -29,6 +31,9 @@ import com.boykodmytr.gymtracker.feature.workout.summary.WorkoutSummaryScreen
 
 /** Result key: the exercise picked in the library for the template editor below it. */
 private const val PICKED_EXERCISE_ID = "picked_exercise_id"
+
+/** Result key: the exercise the editor below should merge its exercise into. */
+private const val MERGE_TARGET_ID = "merge_target_id"
 
 @Composable
 fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -127,12 +132,17 @@ fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             )
         }
         composable<ExerciseLibraryRoute> { entry ->
-            val picking = entry.toRoute<ExerciseLibraryRoute>().pickForTemplateId != null
+            val route = entry.toRoute<ExerciseLibraryRoute>()
+            val resultKey = when {
+                route.pickForTemplateId != null -> PICKED_EXERCISE_ID
+                route.mergeFromId != null -> MERGE_TARGET_ID
+                else -> null
+            }
             ExerciseLibraryScreen(
                 onBack = back,
                 onSelect = { exerciseId ->
-                    if (picking) {
-                        navController.previousBackStackEntry?.savedStateHandle?.set(PICKED_EXERCISE_ID, exerciseId)
+                    if (resultKey != null) {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(resultKey, exerciseId)
                         navController.popBackStack()
                     } else {
                         navController.navigate(ExerciseEditorRoute(exerciseId))
@@ -141,15 +151,27 @@ fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 onCreate = { navController.navigate(ExerciseEditorRoute()) },
             )
         }
-        composable<ExerciseEditorRoute> {
+        composable<ExerciseEditorRoute> { entry ->
+            val mergeTarget by entry.savedStateHandle.getStateFlow<String?>(MERGE_TARGET_ID, null).collectAsStateWithLifecycle()
             ExerciseEditorScreen(
                 onBack = back,
                 onOpenProgress = { navController.navigate(ExerciseProgressRoute(it)) },
+                mergeTargetId = mergeTarget,
+                onMergeTargetConsumed = { entry.savedStateHandle[MERGE_TARGET_ID] = null },
+                onPickMergeTarget = { navController.navigate(ExerciseLibraryRoute(mergeFromId = it)) },
             )
         }
 
         // Profile & settings
         composable<MeasurementDetailRoute> { MeasurementDetailScreen(onBack = back) }
-        composable<SettingsRoute> { SettingsScreen(onBack = back) }
+        composable<SettingsRoute> {
+            SettingsScreen(
+                onBack = back,
+                onOpenExport = { navController.navigate(DataExportRoute) },
+                onOpenImport = { navController.navigate(DataImportRoute) },
+            )
+        }
+        composable<DataExportRoute> { DataExportScreen(onBack = back) }
+        composable<DataImportRoute> { DataImportScreen(onBack = back) }
     }
 }

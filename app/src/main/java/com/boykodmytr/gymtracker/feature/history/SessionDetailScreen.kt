@@ -81,14 +81,16 @@ fun SessionDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "header") {
-                val start = session.startedAt.atZone(zone).toLocalTime()
-                val end = session.endedAt?.atZone(zone)?.toLocalTime()
+                val start = Fmt.knownTime(session.startedAt, zone)
+                val end = if (start != null) session.endedAt?.atZone(zone)?.toLocalTime() else null
                 Text(Fmt.fullDate(session.date).replaceFirstChar { it.titlecase() }, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    listOfNotNull(Fmt.time(start), end?.let(Fmt::time)).joinToString("–"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (start != null) {
+                    Text(
+                        listOfNotNull(Fmt.time(start), end?.let(Fmt::time)).joinToString("–"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             item(key = "tiles") {
                 StatRow {
@@ -115,6 +117,10 @@ fun SessionDetailScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    // Notes of imported workouts (the journal's comment, its spelling of the name).
+                    if (exercise.notes.isNotBlank()) {
+                        Text(exercise.notes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     if (exercise.sets.isEmpty() || exercise.status == ExerciseStatus.SKIPPED) {
                         Text(stringResource(R.string.summary_skipped), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

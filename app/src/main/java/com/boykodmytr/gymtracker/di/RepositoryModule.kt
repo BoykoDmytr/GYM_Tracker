@@ -5,7 +5,9 @@ import com.boykodmytr.gymtracker.data.repository.ExerciseRepositoryImpl
 import com.boykodmytr.gymtracker.data.repository.ProgramRepositoryImpl
 import com.boykodmytr.gymtracker.data.repository.WorkoutRepositoryImpl
 import com.boykodmytr.gymtracker.data.settings.SettingsRepositoryImpl
+import com.boykodmytr.gymtracker.data.transfer.DataTransferRepositoryImpl
 import com.boykodmytr.gymtracker.domain.repository.BodyRepository
+import com.boykodmytr.gymtracker.domain.repository.DataTransferRepository
 import com.boykodmytr.gymtracker.domain.repository.ExerciseRepository
 import com.boykodmytr.gymtracker.domain.repository.ProgramRepository
 import com.boykodmytr.gymtracker.domain.repository.SettingsRepository
@@ -24,4 +26,5 @@ abstract class RepositoryModule {
     @Binds abstract fun bindExerciseRepository(impl: ExerciseRepositoryImpl): ExerciseRepository
     @Binds abstract fun bindBodyRepository(impl: BodyRepositoryImpl): BodyRepository
     @Binds abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+    @Binds abstract fun bindDataTransferRepository(impl: DataTransferRepositoryImpl): DataTransferRepository
 }

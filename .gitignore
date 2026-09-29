@@ -26,3 +26,7 @@ Thumbs.db
 *.keystore
 *.p12
 *.pfx
+
+# Personal training data (journal exports / converted CSV) must not end up in the public repository
+*.xlsx
+tools/*.csv

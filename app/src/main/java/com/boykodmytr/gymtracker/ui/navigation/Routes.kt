@@ -18,9 +18,14 @@ import kotlinx.serialization.Serializable
 @Serializable data class ProgramDetailRoute(val programId: String)
 @Serializable data class TemplateEditorRoute(val templateId: String)
 
-/** With [pickForTemplateId] set, tapping an exercise adds it to that workout instead of opening it. */
-@Serializable data class ExerciseLibraryRoute(val pickForTemplateId: String? = null)
+/**
+ * With [pickForTemplateId] set, tapping an exercise adds it to that workout instead of opening it;
+ * with [mergeFromId] set, it picks where that exercise's history is merged into.
+ */
+@Serializable data class ExerciseLibraryRoute(val pickForTemplateId: String? = null, val mergeFromId: String? = null)
 @Serializable data class ExerciseEditorRoute(val exerciseId: String? = null)
 @Serializable data class MeasurementDetailRoute(val typeId: String)
 @Serializable data object SettingsRoute
+@Serializable data object DataExportRoute
+@Serializable data object DataImportRoute
 @Serializable data object TimerRoute

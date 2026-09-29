@@ -21,9 +21,9 @@ fun SessionCard(
     val zone = LocalClock.current.zone
     SectionCard(modifier = modifier, onClick = onClick) {
         Text(session.name, style = MaterialTheme.typography.titleMedium)
-        val start = session.startedAt.atZone(zone).toLocalTime()
+        val start = Fmt.knownTime(session.startedAt, zone)
         Text(
-            "${Fmt.fullDate(session.date).replaceFirstChar { it.titlecase() }} · ${Fmt.time(start)}",
+            listOfNotNull(Fmt.fullDate(session.date).replaceFirstChar { it.titlecase() }, start?.let(Fmt::time)).joinToString(" · "),
             style = MaterialTheme.typography.bodyMedium,
         )
         val parts = buildList {

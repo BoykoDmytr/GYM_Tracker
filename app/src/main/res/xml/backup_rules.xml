@@ -4,4 +4,5 @@
     <include domain="database" path="." />
     <include domain="file" path="datastore/" />
     <include domain="file" path="exercise_images/" />
+    <include domain="file" path="transfer_history.json" />
 </full-backup-content>

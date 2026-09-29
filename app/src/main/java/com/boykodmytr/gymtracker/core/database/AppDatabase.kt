@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.boykodmytr.gymtracker.core.database.dao.BodyDao
 import com.boykodmytr.gymtracker.core.database.dao.ExerciseDao
 import com.boykodmytr.gymtracker.core.database.dao.ProgramDao
+import com.boykodmytr.gymtracker.core.database.dao.TransferDao
 import com.boykodmytr.gymtracker.core.database.dao.WorkoutDao
 import com.boykodmytr.gymtracker.core.database.entity.BodyMeasurementEntity
 import com.boykodmytr.gymtracker.core.database.entity.ExerciseEntity
@@ -46,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun programDao(): ProgramDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun bodyDao(): BodyDao
+    abstract fun transferDao(): TransferDao
 
     companion object {
         const val NAME = "gym_tracker.db"

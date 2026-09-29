@@ -94,6 +94,13 @@ object Fmt {
     fun monthYear(date: LocalDate): String = monthYear.format(date).replaceFirstChar { it.titlecase(AppLocale) }
     fun time(value: LocalTime): String = time.format(value)
 
+    /**
+     * Local start time, or null when it is unknown: workouts imported from a table without times are
+     * stored at midnight, and showing "00:00" for them would be made up.
+     */
+    fun knownTime(instant: java.time.Instant, zone: java.time.ZoneId): LocalTime? =
+        instant.atZone(zone).toLocalTime().takeUnless { it == LocalTime.MIDNIGHT }
+
     fun dayOfWeek(date: LocalDate): String = date.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale)
     fun dayOfWeekShort(day: java.time.DayOfWeek): String =
         day.getDisplayName(TextStyle.SHORT, AppLocale).replaceFirstChar { it.titlecase(AppLocale) }
