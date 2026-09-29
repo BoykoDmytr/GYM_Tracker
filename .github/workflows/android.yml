@@ -97,6 +97,11 @@ jobs:
 
       # Debug app + on-device tests for the emulator job (real MediaStore URIs for picked photos).
       - name: Build on-device tests
+        # The signing step exported SIGNING_KEYSTORE_FILE for all later steps; Gradle then needs the
+        # password to configure the project, even though these debug builds do not use the key.
+        env:
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
           mkdir -p instrumented
