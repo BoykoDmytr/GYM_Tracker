@@ -117,4 +117,8 @@ dependencies {
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // On-device tests (CI emulator): real MediaStore content:// URIs for picked pictures.
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
 }

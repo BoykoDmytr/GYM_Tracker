@@ -95,6 +95,21 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      # Debug app + on-device tests for the emulator job (real MediaStore URIs for picked photos).
+      - name: Build on-device tests
+        run: |
+          ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+          mkdir -p instrumented
+          cp app/build/outputs/apk/debug/app-debug.apk instrumented/
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk instrumented/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-apks
+          path: instrumented/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
   test:
     name: Tests and lint
     runs-on: ubuntu-latest
@@ -141,6 +156,11 @@ jobs:
           name: gym-tracker-apk
           path: dist
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: instrumented-test-apks
+          path: instrumented
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -148,7 +168,8 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       # The release APK is minified by R8; this catches crashes that unit tests cannot see.
-      - name: Install the APK and open the main screens
+      # Then the on-device tests run against the debug build.
+      - name: Install the APK, open the main screens, run on-device tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -157,7 +178,9 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash .github/scripts/emulator-smoke-test.sh dist
+          script: |
+            bash .github/scripts/emulator-smoke-test.sh dist
+            bash .github/scripts/emulator-instrumented-tests.sh instrumented
 
       - name: Upload emulator screenshots
         if: always()
