@@ -81,15 +81,21 @@ class ExerciseRepositoryImpl @Inject constructor(
 
     override suspend fun addImage(exerciseId: String, sourceUri: String) {
         val fileName = imageStorage.import(sourceUri.toUri())
-        exerciseDao.insertImage(
-            ExerciseImageEntity(
-                id = newId(),
-                exerciseId = exerciseId,
-                fileName = fileName,
-                position = exerciseDao.maxImagePosition(exerciseId) + 1,
-                createdAt = clock.instant(),
-            ),
-        )
+        try {
+            exerciseDao.insertImage(
+                ExerciseImageEntity(
+                    id = newId(),
+                    exerciseId = exerciseId,
+                    fileName = fileName,
+                    position = exerciseDao.maxImagePosition(exerciseId) + 1,
+                    createdAt = clock.instant(),
+                ),
+            )
+        } catch (e: Exception) {
+            // No row points at the copy (e.g. the exercise was deleted meanwhile): do not leave an orphan file.
+            imageStorage.delete(fileName)
+            throw e
+        }
     }
 
     override suspend fun deleteImage(imageId: String) {
