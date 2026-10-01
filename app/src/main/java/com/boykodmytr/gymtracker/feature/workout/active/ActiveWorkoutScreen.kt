@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material3.AssistChip
@@ -52,10 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boykodmytr.gymtracker.R
+import com.boykodmytr.gymtracker.domain.logic.AfterSet
 import com.boykodmytr.gymtracker.domain.logic.ProgressionHint
 import com.boykodmytr.gymtracker.domain.logic.WorkoutFlow
 import com.boykodmytr.gymtracker.domain.logic.WorkoutStep
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
+import com.boykodmytr.gymtracker.domain.model.SessionExercise
 import com.boykodmytr.gymtracker.domain.model.SetLog
 import com.boykodmytr.gymtracker.domain.model.WeightUnit
 import com.boykodmytr.gymtracker.ui.components.BigButton
@@ -195,6 +198,9 @@ fun ActiveWorkoutScreen(
 
             if (step != null) {
                 ExerciseHeader(name = step.exercise.exerciseName, onTechnique = { showTechnique = true })
+                if (state.superset.isNotEmpty()) {
+                    SupersetCard(superset = state.superset, currentId = step.exercise.id, after = state.afterSet)
+                }
                 when (step) {
                     is WorkoutStep.PerformSet -> PerformSetContent(step, state.lastPerformance, state.hint, unit)
                     is WorkoutStep.ExerciseDone -> ExerciseDoneContent(step)
@@ -294,6 +300,30 @@ fun ActiveWorkoutScreen(
         null -> Unit
     }
 }
+
+@Composable
+private fun SupersetCard(superset: List<SessionExercise>, currentId: String, after: AfterSet?) {
+    SectionCard(containerColor = MaterialTheme.colorScheme.tertiaryContainer) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(Icons.Filled.Link, contentDescription = null)
+            Text(
+                stringResource(R.string.superset_with, superset.joinToString(" → ") { it.exerciseName }),
+                style = MaterialTheme.typography.titleSmall,
+            )
+        }
+        val text = when {
+            after == null -> null
+            !after.rest && after.switchTo != null -> superset.firstOrNull { it.id == after.switchTo }
+                ?.let { stringResource(R.string.superset_next_no_rest, it.exerciseName) }
+            !after.workoutDone && superset.any { it.id != currentId && it.isOpen() } ->
+                stringResource(R.string.superset_round_rest)
+            else -> null
+        }
+        if (text != null) Text(text, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun SessionExercise.isOpen() = status == ExerciseStatus.PENDING && sets.size < target.setsMax
 
 @Composable
 private fun ExerciseHeader(name: String, onTechnique: () -> Unit) {

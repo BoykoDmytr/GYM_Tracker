@@ -7,6 +7,7 @@ import com.boykodmytr.gymtracker.core.database.dao.ProgramDao
 import com.boykodmytr.gymtracker.core.database.entity.ProgramEntity
 import com.boykodmytr.gymtracker.core.database.entity.TemplateExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
+import com.boykodmytr.gymtracker.domain.logic.Supersets
 import com.boykodmytr.gymtracker.domain.model.Program
 import com.boykodmytr.gymtracker.domain.model.SetTarget
 import com.boykodmytr.gymtracker.domain.model.WorkoutTemplate
@@ -145,15 +146,34 @@ class ProgramRepositoryImpl @Inject constructor(
     override suspend fun removeTemplateExercise(id: String) = db.withTransaction {
         val existing = programDao.getTemplateExercise(id) ?: return@withTransaction
         programDao.deleteTemplateExercise(id)
-        programDao.getTemplateExercises(existing.templateId).forEachIndexed { index, te ->
+        val rest = programDao.getTemplateExercises(existing.templateId)
+        rest.forEachIndexed { index, te ->
             if (te.orderIndex != index) programDao.setTemplateExerciseOrder(te.id, index)
         }
+        saveSupersets(rest, Supersets.normalize(rest.map { it.supersetId }, ::newId))
     }
 
     override suspend fun moveTemplateExercise(id: String, offset: Int) = db.withTransaction {
         val existing = programDao.getTemplateExercise(id) ?: return@withTransaction
         val reordered = programDao.getTemplateExercises(existing.templateId).moved(id, offset) { it.id }
         reordered.forEachIndexed { index, te -> programDao.setTemplateExerciseOrder(te.id, index) }
+        // Moving an exercise into or out of a superset breaks it rather than silently growing it.
+        saveSupersets(reordered, Supersets.normalize(reordered.map { it.supersetId }, ::newId))
+    }
+
+    override suspend fun setSupersetWithNext(id: String, linked: Boolean) = db.withTransaction {
+        val existing = programDao.getTemplateExercise(id) ?: return@withTransaction
+        val items = programDao.getTemplateExercises(existing.templateId)
+        val index = items.indexOfFirst { it.id == id }
+        val ids = items.map { it.supersetId }
+        val updated = if (linked) Supersets.link(ids, index, ::newId) else Supersets.unlink(ids, index, ::newId)
+        saveSupersets(items, updated)
+    }
+
+    private suspend fun saveSupersets(items: List<TemplateExerciseEntity>, ids: List<String?>) {
+        items.zip(ids).forEach { (te, supersetId) ->
+            if (te.supersetId != supersetId) programDao.setTemplateExerciseSuperset(te.id, supersetId)
+        }
     }
 
     private fun today(): LocalDate = LocalDate.now(clock)

@@ -73,4 +73,6 @@ data class TemplateExerciseEntity(
     val notes: String,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "updated_at") val updatedAt: Instant,
+    /** Neighbouring exercises with the same id form a superset (added in schema v2). */
+    @ColumnInfo(name = "superset_id") val supersetId: String? = null,
 )

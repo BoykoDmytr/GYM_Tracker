@@ -71,6 +71,7 @@ class WorkoutRepositoryImpl @Inject constructor(
                     restSeconds = te.restSeconds,
                     status = ExerciseStatus.PENDING,
                     notes = te.notes,
+                    supersetId = te.supersetId,
                 )
             }
         workoutDao.insertSession(

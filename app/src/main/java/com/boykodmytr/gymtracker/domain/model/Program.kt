@@ -29,4 +29,6 @@ data class TemplateExercise(
     /** Rest override for this exercise; null means "use the default from settings". */
     val restSeconds: Int?,
     val notes: String,
+    /** Neighbouring exercises with the same id are done as a superset; null = on its own. */
+    val supersetId: String? = null,
 )

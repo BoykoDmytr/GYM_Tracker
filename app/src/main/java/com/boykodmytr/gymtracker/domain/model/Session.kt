@@ -53,6 +53,8 @@ data class SessionExercise(
     val status: ExerciseStatus,
     val notes: String,
     val sets: List<SetLog>,
+    /** Neighbouring exercises with the same id are done as a superset; null = on its own. */
+    val supersetId: String? = null,
 )
 
 data class SetLog(

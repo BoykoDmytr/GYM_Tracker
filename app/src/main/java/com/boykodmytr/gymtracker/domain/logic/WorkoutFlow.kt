@@ -25,6 +25,16 @@ sealed interface WorkoutStep {
     ) : WorkoutStep
 }
 
+/** Where the workout goes after a set has been logged. */
+data class AfterSet(
+    /** Exercise to switch to (the next one of a superset); null = stay on the current one. */
+    val switchTo: String?,
+    /** False between exercises of a superset round: the next exercise follows without rest. */
+    val rest: Boolean,
+    /** No exercise of the workout needs another set. */
+    val workoutDone: Boolean,
+)
+
 /**
  * Pure state machine of an active workout. Everything is derived from what is stored in the database
  * (logged sets, exercise statuses, current exercise pointer), so the workout survives the app being
@@ -66,6 +76,38 @@ object WorkoutFlow {
         val index = exercises.indexOfFirst { it.id == currentId }
         val rotated = if (index == -1) exercises else exercises.drop(index + 1) + exercises.take(index)
         return rotated.firstOrNull { it.status == ExerciseStatus.PENDING && it.id != currentId }
+    }
+
+    /** The exercises of [exercise]'s superset in order, or just [exercise] when it is not in one. */
+    fun supersetOf(session: WorkoutSession, exercise: SessionExercise): List<SessionExercise> {
+        val id = exercise.supersetId ?: return listOf(exercise)
+        val exercises = ordered(session)
+        val index = exercises.indexOfFirst { it.id == exercise.id }
+        if (index == -1) return listOf(exercise)
+        var start = index
+        while (start > 0 && exercises[start - 1].supersetId == id) start--
+        var end = index
+        while (end < exercises.lastIndex && exercises[end + 1].supersetId == id) end++
+        return exercises.subList(start, end + 1)
+    }
+
+    /**
+     * Decides what follows a set of [exerciseId]; [session] is the state before the set is saved.
+     * In a superset one set of each exercise makes a round (A1 → B1 → rest → A2 → B2 → rest …);
+     * an exercise with fewer planned sets simply drops out of the later rounds.
+     */
+    fun afterSet(session: WorkoutSession, exerciseId: String): AfterSet {
+        fun setsAfter(e: SessionExercise) = e.sets.size + if (e.id == exerciseId) 1 else 0
+        fun open(e: SessionExercise) = e.status == ExerciseStatus.PENDING && setsAfter(e) < e.target.setsMax
+        val current = session.exercises.firstOrNull { it.id == exerciseId }
+            ?: return AfterSet(null, rest = true, workoutDone = false)
+        val workoutDone = session.exercises.none(::open)
+        val group = supersetOf(session, current)
+        if (group.size < 2) return AfterSet(null, rest = true, workoutDone = workoutDone)
+        val index = group.indexOfFirst { it.id == exerciseId }
+        group.drop(index + 1).firstOrNull(::open)?.let { return AfterSet(it.id, rest = false, workoutDone = false) }
+        val nextRound = group.firstOrNull(::open)
+        return AfterSet(nextRound?.id?.takeIf { it != exerciseId }, rest = true, workoutDone = workoutDone)
     }
 
     /** The user may close an exercise early once the lower bound of the set range is reached. */

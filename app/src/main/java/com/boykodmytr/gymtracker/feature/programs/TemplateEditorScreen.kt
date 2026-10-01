@@ -1,6 +1,10 @@
 package com.boykodmytr.gymtracker.feature.programs
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,15 +17,19 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boykodmytr.gymtracker.R
+import com.boykodmytr.gymtracker.domain.logic.Supersets
 import com.boykodmytr.gymtracker.ui.components.ConfirmDialog
 import com.boykodmytr.gymtracker.ui.components.EmptyState
 import com.boykodmytr.gymtracker.ui.components.SecondaryButton
@@ -81,8 +90,18 @@ fun TemplateEditorScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (template.exercises.isEmpty()) item(key = "empty") { EmptyState(stringResource(R.string.programs_workout_empty)) }
+            val supersetIds = template.exercises.map { it.supersetId }
             itemsIndexed(template.exercises, key = { _, e -> e.id }) { index, item ->
-                SectionCard {
+                val inSuperset = item.supersetId != null
+                SectionCard(
+                    containerColor = if (inSuperset) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    if (inSuperset) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Text(stringResource(R.string.superset_label), style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("${index + 1}. ${item.exercise.name}", style = MaterialTheme.typography.titleMedium)
@@ -112,6 +131,12 @@ fun TemplateEditorScreen(
                             Icon(Icons.Outlined.RemoveCircleOutline, stringResource(R.string.template_remove_exercise))
                         }
                     }
+                }
+                if (index < template.exercises.lastIndex) {
+                    SupersetToggle(
+                        linked = Supersets.isLinkedWithNext(supersetIds, index),
+                        onToggle = { viewModel.setSupersetWithNext(item.id, it) },
+                    )
                 }
             }
             item(key = "add") {
@@ -184,5 +209,25 @@ fun TemplateEditorScreen(
             onDismiss = { confirmDelete = false },
             destructive = true,
         )
+    }
+}
+
+/** Sits between two exercises: joins them into a superset or splits them. */
+@Composable
+private fun SupersetToggle(linked: Boolean, onToggle: (Boolean) -> Unit) {
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if (linked) {
+            FilledTonalButton(onClick = { onToggle(false) }) {
+                Icon(Icons.Filled.LinkOff, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.superset_unlink))
+            }
+        } else {
+            TextButton(onClick = { onToggle(true) }) {
+                Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.superset_link))
+            }
+        }
     }
 }

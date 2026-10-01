@@ -25,4 +25,7 @@ interface ProgramRepository {
     suspend fun updateTemplateExercise(id: String, target: SetTarget, restSeconds: Int?, notes: String)
     suspend fun removeTemplateExercise(id: String)
     suspend fun moveTemplateExercise(id: String, offset: Int)
+
+    /** Joins the exercise with the next one in its workout into a superset, or splits them. */
+    suspend fun setSupersetWithNext(id: String, linked: Boolean)
 }

@@ -191,6 +191,12 @@
     <string name="template_rename">Перейменувати</string>
     <string name="template_rest_default">відпочинок %1$s (типовий)</string>
     <string name="template_remove_exercise">Прибрати з тренування</string>
+    <string name="superset_label">Суперсет</string>
+    <string name="superset_link">Обʼєднати в суперсет</string>
+    <string name="superset_unlink">Розʼєднати суперсет</string>
+    <string name="superset_with">Суперсет: %1$s</string>
+    <string name="superset_next_no_rest">Після підходу — одразу %1$s, без відпочинку</string>
+    <string name="superset_round_rest">Після підходу — відпочинок, потім нове коло</string>
     <string name="template_add_exercise">Додати вправу</string>
     <string name="template_delete_title">Видалити тренування?</string>
     <string name="template_delete_text">Тренування буде видалено з програми. Історія виконаних тренувань залишиться.</string>

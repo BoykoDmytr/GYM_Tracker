@@ -21,8 +21,9 @@ import com.boykodmytr.gymtracker.core.database.entity.WorkoutSessionEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
 
 /**
- * Schema version 1. Every future change must come with a Migration (schemas are exported to
+ * Every schema change must come with a Migration in Migrations.kt (schemas are exported to
  * app/schemas so migrations can be tested) – never fallbackToDestructiveMigration on user data.
+ * v2: superset_id on template_exercise and session_exercise.
  */
 @Database(
     entities = [
@@ -38,7 +39,7 @@ import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
         SessionExerciseEntity::class,
         SetLogEntity::class,
     ],
-    version = 1,
+    version = AppDatabase.VERSION,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -51,5 +52,6 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "gym_tracker.db"
+        const val VERSION = 2
     }
 }

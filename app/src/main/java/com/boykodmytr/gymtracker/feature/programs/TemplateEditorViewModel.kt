@@ -67,6 +67,7 @@ class TemplateEditorViewModel @Inject constructor(
     }
     fun remove(id: String) = launch { programRepository.removeTemplateExercise(id) }
     fun move(id: String, offset: Int) = launch { programRepository.moveTemplateExercise(id, offset) }
+    fun setSupersetWithNext(id: String, linked: Boolean) = launch { programRepository.setSupersetWithNext(id, linked) }
     fun delete() = launch {
         programRepository.deleteTemplate(templateId)
         _deleted.send(Unit)

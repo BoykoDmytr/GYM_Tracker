@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.boykodmytr.gymtracker.domain.logic.AfterSet
 import com.boykodmytr.gymtracker.domain.logic.ProgressionAdvisor
 import com.boykodmytr.gymtracker.domain.logic.ProgressionHint
 import com.boykodmytr.gymtracker.domain.logic.WorkoutFlow
@@ -57,6 +58,10 @@ data class ActiveWorkoutUiState(
     val suggestedInput: SetInput = SetInput(0.0, 0),
     val restSeconds: Int = AppSettings().defaultRestSeconds,
     val settings: AppSettings = AppSettings(),
+    /** The current exercise's superset in order; empty when it is done on its own. */
+    val superset: List<SessionExercise> = emptyList(),
+    /** In a superset: what follows the set the user is about to do. */
+    val afterSet: AfterSet? = null,
 )
 
 sealed interface ActiveWorkoutEvent {
@@ -123,6 +128,7 @@ class ActiveWorkoutViewModel @Inject constructor(
         val current = WorkoutFlow.currentExercise(session)
         val step = WorkoutFlow.step(session, extraSetRequested = current != null && extraFor == current.id)
         val ordered = WorkoutFlow.ordered(session)
+        val superset = current?.let { WorkoutFlow.supersetOf(session, it) }?.takeIf { it.size > 1 }.orEmpty()
         ActiveWorkoutUiState(
             loading = false,
             session = session,
@@ -136,6 +142,8 @@ class ActiveWorkoutViewModel @Inject constructor(
             suggestedInput = suggestInput(step, last),
             restSeconds = current?.restSeconds ?: settings.defaultRestSeconds,
             settings = settings,
+            superset = superset,
+            afterSet = if (superset.isNotEmpty() && step is WorkoutStep.PerformSet) WorkoutFlow.afterSet(session, step.exercise.id) else null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ActiveWorkoutUiState())
 
@@ -158,8 +166,15 @@ class ActiveWorkoutViewModel @Inject constructor(
         workoutRepository.logSet(step.exercise.id, input)
         extraSetFor.value = null
         val settings = settingsRepository.settings.first()
-        val lastSetOfWorkout = step.setNumber >= step.plannedSets && WorkoutFlow.nextPending(s, step.exercise.id) == null
-        if (settings.autoStartRest && !lastSetOfWorkout) {
+        val next = WorkoutFlow.afterSet(s, step.exercise.id)
+        if (next.switchTo != null) {
+            // Leaving an exercise of a superset that has all its sets closes it, as "next exercise" would.
+            if (step.setNumber >= step.plannedSets) {
+                workoutRepository.setExerciseStatus(step.exercise.id, ExerciseStatus.COMPLETED)
+            }
+            workoutRepository.setCurrentExercise(sessionId, next.switchTo)
+        }
+        if (settings.autoStartRest && next.rest && !next.workoutDone) {
             startRestNow(step.exercise.restSeconds ?: settings.defaultRestSeconds)
         } else {
             workoutRepository.clearRest(sessionId)

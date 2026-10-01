@@ -30,6 +30,7 @@ fun exercise(
     target: SetTarget = SetTarget(3, 3, 8, 10),
     status: ExerciseStatus = ExerciseStatus.PENDING,
     sets: Int = 0,
+    superset: String? = null,
 ) = SessionExercise(
     id = id,
     sessionId = "s",
@@ -41,6 +42,7 @@ fun exercise(
     status = status,
     notes = "",
     sets = (1..sets).map { set(id, it) },
+    supersetId = superset,
 )
 
 fun session(exercises: List<SessionExercise>, currentId: String? = null) = WorkoutSession(

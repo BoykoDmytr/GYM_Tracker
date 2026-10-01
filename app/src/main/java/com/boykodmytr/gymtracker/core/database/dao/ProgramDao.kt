@@ -96,6 +96,9 @@ interface ProgramDao {
     @Query("UPDATE template_exercise SET order_index = :orderIndex WHERE id = :id")
     suspend fun setTemplateExerciseOrder(id: String, orderIndex: Int)
 
+    @Query("UPDATE template_exercise SET superset_id = :supersetId WHERE id = :id")
+    suspend fun setTemplateExerciseSuperset(id: String, supersetId: String?)
+
     @Query("DELETE FROM template_exercise WHERE id = :id")
     suspend fun deleteTemplateExercise(id: String)
 }

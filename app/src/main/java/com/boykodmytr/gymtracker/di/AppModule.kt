@@ -8,7 +8,9 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.boykodmytr.gymtracker.core.common.ApplicationScope
 import com.boykodmytr.gymtracker.core.common.IoDispatcher
+import com.boykodmytr.gymtracker.core.database.ALL_MIGRATIONS
 import com.boykodmytr.gymtracker.core.database.AppDatabase
+import com.boykodmytr.gymtracker.core.database.DatabaseBackup
 import com.boykodmytr.gymtracker.core.database.dao.BodyDao
 import com.boykodmytr.gymtracker.core.database.dao.ExerciseDao
 import com.boykodmytr.gymtracker.core.database.dao.ProgramDao
@@ -62,8 +64,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME).build()
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
+        DatabaseBackup.beforeUpgrade(context, AppDatabase.NAME, AppDatabase.VERSION)
+        return Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME)
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
+    }
 
     @Provides fun provideExerciseDao(db: AppDatabase): ExerciseDao = db.exerciseDao()
     @Provides fun provideProgramDao(db: AppDatabase): ProgramDao = db.programDao()

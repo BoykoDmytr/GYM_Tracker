@@ -47,6 +47,7 @@ internal fun TemplateWithExercises.toDomain() = WorkoutTemplate(
                 target = SetTarget(te.setsMin, te.setsMax, te.repsMin, te.repsMax, te.targetWeightKg),
                 restSeconds = te.restSeconds,
                 notes = te.notes,
+                supersetId = te.supersetId,
             )
         },
 )
@@ -83,6 +84,7 @@ internal fun SessionExerciseWithSets.toDomain() = SessionExercise(
     status = exercise.status,
     notes = exercise.notes,
     sets = sets.sortedBy { it.setNumber }.map { it.toDomain() },
+    supersetId = exercise.supersetId,
 )
 
 internal fun SessionWithExercises.toDomain(): WorkoutSession {

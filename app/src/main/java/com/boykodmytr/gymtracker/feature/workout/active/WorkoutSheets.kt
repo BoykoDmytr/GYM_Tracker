@@ -78,8 +78,12 @@ fun ExerciseListSheet(
                             exercise.isClosed -> stringResource(R.string.workout_status_done)
                             else -> null
                         }
-                        if (status != null) {
-                            Text(status, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val label = listOfNotNull(
+                            status,
+                            exercise.supersetId?.let { stringResource(R.string.superset_label) },
+                        ).joinToString(" · ").takeIf { it.isNotEmpty() }
+                        if (label != null) {
+                            Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Text(

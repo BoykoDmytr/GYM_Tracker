@@ -80,6 +80,8 @@ data class SessionExerciseEntity(
     @ColumnInfo(name = "rest_seconds") val restSeconds: Int?,
     val status: ExerciseStatus,
     val notes: String,
+    /** Copied from the template: neighbouring exercises with the same id form a superset. */
+    @ColumnInfo(name = "superset_id") val supersetId: String? = null,
 )
 
 @Entity(
