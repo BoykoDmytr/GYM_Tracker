@@ -61,10 +61,15 @@ object ImportPlanner {
      * looking names are never matched automatically.
      */
     fun suggestMatches(file: ParsedWorkoutFile, existing: List<ExistingExercise>): List<ExerciseMatch> {
-        val byKey = existing.associateBy { HeaderText.key(it.name) }
         val setCounts = LinkedHashMap<String, Int>()
         file.sessions.forEach { s -> s.exercises.forEach { e -> setCounts[e.name] = (setCounts[e.name] ?: 0) + e.sets.size } }
-        return setCounts.map { (name, sets) ->
+        return suggestMatches(setCounts, existing)
+    }
+
+    /** Same matching for any list of names; [counts] maps each name (in file order) to how often it occurs. */
+    fun suggestMatches(counts: Map<String, Int>, existing: List<ExistingExercise>): List<ExerciseMatch> {
+        val byKey = existing.associateBy { HeaderText.key(it.name) }
+        return counts.map { (name, sets) ->
             val same = byKey[HeaderText.key(name)]
             if (same != null) return@map ExerciseMatch(name, ExerciseTarget.Existing(same.id, same.name), MatchReason.SAME_NAME, sets)
             val canonical = ExerciseAliases.canonical(name)

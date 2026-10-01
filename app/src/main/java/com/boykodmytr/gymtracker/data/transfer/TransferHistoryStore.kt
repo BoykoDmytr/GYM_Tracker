@@ -57,6 +57,9 @@ data class TransferRecord(
     val sets: Int = 0,
     /** Workouts whose history a merge moved. */
     val sessionCount: Int = 0,
+    val programIds: List<String> = emptyList(),
+    /** Program that was active before an import activated a new one. */
+    val previousActiveProgramId: String? = null,
     val merge: MergeUndo? = null,
     val undone: Boolean = false,
 )

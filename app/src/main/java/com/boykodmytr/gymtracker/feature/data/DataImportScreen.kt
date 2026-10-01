@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -31,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -45,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -54,6 +57,7 @@ import com.boykodmytr.gymtracker.domain.repository.TransferEntry
 import com.boykodmytr.gymtracker.domain.repository.TransferKind
 import com.boykodmytr.gymtracker.domain.transfer.ExerciseMatch
 import com.boykodmytr.gymtracker.domain.transfer.ExerciseTarget
+import com.boykodmytr.gymtracker.domain.transfer.ExistingExercise
 import com.boykodmytr.gymtracker.domain.transfer.ImportIssue
 import com.boykodmytr.gymtracker.domain.transfer.IssueKind
 import com.boykodmytr.gymtracker.domain.transfer.IssueSeverity
@@ -148,11 +152,16 @@ fun DataImportScreen(
                 }
                 is ImportStep.ReviewWorkouts -> workoutReview(s.review, viewModel, resources)
                 is ImportStep.ReviewBody -> bodyReview(s.review, viewModel, resources)
+                is ImportStep.ReviewProgram -> programReview(s.review, viewModel, resources)
                 is ImportStep.Done -> {
                     item(key = "done") {
                         SectionCard(title = stringResource(R.string.import_done_title)) {
                             val e = s.entry
-                            Text(stringResource(R.string.import_done_text, e.sessions, e.sets, e.measurements, e.exercisesCreated))
+                            if (e.kind == TransferKind.PROGRAM_IMPORT) {
+                                Text(stringResource(R.string.import_program_done_text, e.programs, e.exercisesCreated))
+                            } else {
+                                Text(stringResource(R.string.import_done_text, e.sessions, e.sets, e.measurements, e.exercisesCreated))
+                            }
                             SecondaryButton(stringResource(R.string.import_undo), { confirmUndo = e.id }, Modifier.fillMaxWidth())
                             SecondaryButton(stringResource(R.string.import_choose_other), choose, Modifier.fillMaxWidth(), icon = Icons.Outlined.FileOpen)
                         }
@@ -206,7 +215,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.workoutReview(
             Hint(stringResource(R.string.import_exercises_hint))
             review.matches.forEachIndexed { index, match ->
                 if (index > 0) HorizontalDivider()
-                MatchRow(match, review) { viewModel.setTarget(match.sourceName, it) }
+                MatchRow(match, review.exercises, stringResource(R.string.import_sum_sets, match.setCount)) { viewModel.setTarget(match.sourceName, it) }
             }
         }
     }
@@ -234,6 +243,69 @@ private fun androidx.compose.foundation.lazy.LazyListScope.bodyReview(
     issueItems(plan.issues, resources)
 }
 
+private fun androidx.compose.foundation.lazy.LazyListScope.programReview(
+    review: ProgramReview,
+    viewModel: DataImportViewModel,
+    resources: Resources,
+) {
+    val programs = review.file.programs
+    item(key = "file") { FileCard(review.fileName, review.charset, review.delimiter) }
+    item(key = "summary") {
+        SectionCard(title = stringResource(R.string.import_program_summary_title)) {
+            programs.forEach { p ->
+                Text(
+                    stringResource(R.string.import_program_line, p.name, p.workouts.size, p.exerciseCount),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            if (review.newExercises > 0) Text(stringResource(R.string.import_sum_new_exercises, review.newExercises))
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(
+                    value = review.activate,
+                    role = Role.Switch,
+                    onValueChange = viewModel::setActivateProgram,
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.import_program_activate))
+                    Hint(stringResource(R.string.import_program_activate_hint))
+                }
+                Switch(checked = review.activate, onCheckedChange = null)
+            }
+            ImportButtons(enabled = programs.isNotEmpty(), onImport = viewModel::confirm, onCancel = viewModel::reset)
+        }
+    }
+    programs.forEach { program ->
+        program.workouts.forEachIndexed { index, workout ->
+            item(key = "workout-${program.name}-$index") {
+                SectionCard(title = if (programs.size > 1) "${program.name} · ${workout.name}" else workout.name) {
+                    workout.exercises.forEachIndexed { order, e ->
+                        val t = e.target
+                        val details = listOfNotNull(
+                            "${Fmt.range(t.setsMin, t.setsMax)}×${Fmt.range(t.repsMin, t.repsMax)}",
+                            t.weightKg?.let { "${Fmt.number(it)} кг" },
+                            e.restSeconds?.let { Fmt.restLabel(it) },
+                        ).joinToString(" · ")
+                        Text("${order + 1}. ${e.name}", style = MaterialTheme.typography.bodyMedium)
+                        Hint(details)
+                    }
+                }
+            }
+        }
+    }
+    item(key = "exercises") {
+        SectionCard(title = stringResource(R.string.import_exercises_title)) {
+            Hint(stringResource(R.string.import_exercises_hint))
+            review.matches.forEachIndexed { index, match ->
+                if (index > 0) HorizontalDivider()
+                MatchRow(match, review.exercises, stringResource(R.string.import_program_uses, match.setCount)) { viewModel.setTarget(match.sourceName, it) }
+            }
+        }
+    }
+    issueItems(review.issues, resources)
+}
+
 private fun androidx.compose.foundation.lazy.LazyListScope.historyItems(history: List<TransferEntry>, onUndo: (String) -> Unit) {
     if (history.isEmpty()) return
     item(key = "history") {
@@ -245,6 +317,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historyItems(history:
                         Text(
                             if (entry.kind == TransferKind.EXERCISE_MERGE) {
                                 stringResource(R.string.import_history_merge, entry.title)
+                            } else if (entry.kind == TransferKind.PROGRAM_IMPORT) {
+                                stringResource(R.string.import_history_program, entry.title, entry.programs)
                             } else {
                                 stringResource(R.string.import_history_import, entry.title, entry.sessions, entry.measurements)
                             },
@@ -308,7 +382,7 @@ private fun ImportButtons(enabled: Boolean, onImport: () -> Unit, onCancel: () -
 }
 
 @Composable
-private fun MatchRow(match: ExerciseMatch, review: WorkoutReview, onPick: (ExerciseTarget) -> Unit) {
+private fun MatchRow(match: ExerciseMatch, exercises: List<ExistingExercise>, countLabel: String, onPick: (ExerciseTarget) -> Unit) {
     var picking by remember { mutableStateOf(false) }
     Row(
         Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable { picking = true }.padding(vertical = 6.dp),
@@ -329,12 +403,12 @@ private fun MatchRow(match: ExerciseMatch, review: WorkoutReview, onPick: (Exerc
                     MatchReason.MANUAL -> R.string.import_match_manual
                 },
             )
-            Hint("$reason · ${stringResource(R.string.import_sum_sets, match.setCount)}")
+            Hint("$reason · $countLabel")
         }
     }
     if (picking) {
         val collator = remember { Collator.getInstance(Locale.forLanguageTag("uk")) }
-        val options = remember(review.exercises) { review.exercises.sortedWith(compareBy(collator) { it.name }) }
+        val options = remember(exercises) { exercises.sortedWith(compareBy(collator) { it.name }) }
         AlertDialog(
             onDismissRequest = { picking = false },
             title = { Text(stringResource(R.string.import_pick_title, match.sourceName)) },
@@ -483,6 +557,10 @@ internal fun issueText(resources: Resources, issue: ImportIssue): String {
         IssueKind.MEASUREMENT_DUPLICATE -> resources.getString(R.string.issue_measurement_duplicate)
         IssueKind.BAD_VALUE -> resources.getString(R.string.issue_bad_value, value)
         IssueKind.NO_PARAMETER -> resources.getString(R.string.issue_no_parameter)
+        IssueKind.BAD_SETS -> resources.getString(R.string.issue_bad_sets, value)
+        IssueKind.BAD_REST -> resources.getString(R.string.issue_bad_rest, value)
+        IssueKind.NO_WORKOUT -> resources.getString(R.string.issue_no_workout, value)
+        IssueKind.PROGRAM_EXISTS -> resources.getString(R.string.issue_program_exists, workout)
     }
 }
 

@@ -18,10 +18,16 @@ import com.boykodmytr.gymtracker.domain.transfer.Csv
 import com.boykodmytr.gymtracker.domain.transfer.ExerciseMatch
 import com.boykodmytr.gymtracker.domain.transfer.ExerciseTarget
 import com.boykodmytr.gymtracker.domain.transfer.ExistingExercise
+import com.boykodmytr.gymtracker.domain.transfer.HeaderText
+import com.boykodmytr.gymtracker.domain.transfer.ImportIssue
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlan
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlanner
+import com.boykodmytr.gymtracker.domain.transfer.IssueKind
 import com.boykodmytr.gymtracker.domain.transfer.MatchReason
+import com.boykodmytr.gymtracker.domain.transfer.ParsedProgramFile
 import com.boykodmytr.gymtracker.domain.transfer.ParsedWorkoutFile
+import com.boykodmytr.gymtracker.domain.transfer.ProgramColumnMapping
+import com.boykodmytr.gymtracker.domain.transfer.ProgramFileParser
 import com.boykodmytr.gymtracker.domain.transfer.WorkoutField
 import com.boykodmytr.gymtracker.domain.transfer.WorkoutFileParser
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,12 +61,29 @@ data class WorkoutReview(
 
 data class BodyReview(val fileName: String, val charset: String, val plan: BodyImportPlan)
 
+/** A training program file: workouts with exercises and set/rep ranges, no dates. */
+data class ProgramReview(
+    val fileName: String,
+    val charset: String,
+    val delimiter: Char,
+    val file: ParsedProgramFile,
+    val matches: List<ExerciseMatch>,
+    val exercises: List<ExistingExercise>,
+    val issues: List<ImportIssue>,
+    val activate: Boolean = true,
+) {
+    val targets: Map<String, ExerciseTarget> get() = matches.associate { it.sourceName to it.target }
+    val newExercises: Int get() = matches.map { it.target }.filterIsInstance<ExerciseTarget.New>().distinctBy { HeaderText.key(it.name) }
+        .count { new -> exercises.none { HeaderText.key(it.name) == HeaderText.key(new.name) } }
+}
+
 sealed interface ImportStep {
     data object Idle : ImportStep
     data object Working : ImportStep
     data class Failed(val reason: FailureReason, val detail: String? = null) : ImportStep
     data class ReviewWorkouts(val review: WorkoutReview) : ImportStep
     data class ReviewBody(val review: BodyReview) : ImportStep
+    data class ReviewProgram(val review: ProgramReview) : ImportStep
     data class Done(val entry: TransferEntry) : ImportStep
 }
 
@@ -113,6 +136,17 @@ class DataImportViewModel @Inject constructor(
         if (rows.none { row -> row.any { it.isNotBlank() } }) return ImportStep.Failed(FailureReason.EMPTY)
         val ctx = repository.importContext().also { context = it }
 
+        // A program file also names exercises and reps, so it is recognised before workout history.
+        ProgramColumnMapping.detect(rows)?.let { programMapping ->
+            val file = ProgramFileParser.parse(rows, programMapping, defaultWorkoutName(name))
+            if (file.programs.isEmpty() && file.issues.isEmpty()) return ImportStep.Failed(FailureReason.EMPTY)
+            val existingNames = repository.programNames().map(HeaderText::key).toSet()
+            val issues = file.issues + file.programs.filter { HeaderText.key(it.name) in existingNames }
+                .map { ImportIssue(IssueKind.PROGRAM_EXISTS, workout = it.name) }
+            val matches = ImportPlanner.suggestMatches(ProgramFileParser.exerciseCounts(file), ctx.exercises)
+            return ImportStep.ReviewProgram(ProgramReview(name, charset, delimiter, file, matches, ctx.exercises, issues))
+        }
+
         val mapping = ColumnMapping.detect(rows)
         if (mapping != null) {
             val parsed = WorkoutFileParser(rows, mapping, defaultWorkoutName(name)).parse()
@@ -142,10 +176,20 @@ class DataImportViewModel @Inject constructor(
 
     /** The user's decision for one exercise name from the file. */
     fun setTarget(sourceName: String, target: ExerciseTarget) {
+        (step.value as? ImportStep.ReviewProgram)?.review?.let { review ->
+            val matches = review.matches.map { if (it.sourceName == sourceName) it.copy(target = target, reason = MatchReason.MANUAL) else it }
+            _step.value = ImportStep.ReviewProgram(review.copy(matches = matches))
+            return
+        }
         val review = (step.value as? ImportStep.ReviewWorkouts)?.review ?: return
         val ctx = context ?: return
         val matches = review.matches.map { if (it.sourceName == sourceName) it.copy(target = target, reason = MatchReason.MANUAL) else it }
         _step.update { ImportStep.ReviewWorkouts(buildReview(review.fileName, review.charset, review.delimiter, review.rows, review.mapping, review.parsed, matches, ctx)) }
+    }
+
+    fun setActivateProgram(activate: Boolean) {
+        val review = (step.value as? ImportStep.ReviewProgram)?.review ?: return
+        _step.value = ImportStep.ReviewProgram(review.copy(activate = activate))
     }
 
     fun confirm() {
@@ -156,6 +200,9 @@ class DataImportViewModel @Inject constructor(
                 when (current) {
                     is ImportStep.ReviewWorkouts -> ImportStep.Done(repository.applyWorkoutImport(current.review.plan, current.review.fileName))
                     is ImportStep.ReviewBody -> ImportStep.Done(repository.applyBodyImport(current.review.plan, current.review.fileName))
+                    is ImportStep.ReviewProgram -> ImportStep.Done(
+                        repository.applyProgramImport(current.review.file.programs, current.review.targets, current.review.fileName, current.review.activate),
+                    )
                     else -> current
                 }
             } catch (e: CancellationException) {

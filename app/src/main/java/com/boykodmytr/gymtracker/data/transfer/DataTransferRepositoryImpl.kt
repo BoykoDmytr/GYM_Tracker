@@ -6,9 +6,12 @@ import com.boykodmytr.gymtracker.core.database.AppDatabase
 import com.boykodmytr.gymtracker.core.database.entity.BodyMeasurementEntity
 import com.boykodmytr.gymtracker.core.database.entity.ExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.MeasurementTypeEntity
+import com.boykodmytr.gymtracker.core.database.entity.ProgramEntity
 import com.boykodmytr.gymtracker.core.database.entity.SessionExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.SetLogEntity
+import com.boykodmytr.gymtracker.core.database.entity.TemplateExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutSessionEntity
+import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
 import com.boykodmytr.gymtracker.data.repository.toDomain
 import com.boykodmytr.gymtracker.domain.model.BuiltInMeasurementTypes
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
@@ -31,6 +34,7 @@ import com.boykodmytr.gymtracker.domain.transfer.ExistingSet
 import com.boykodmytr.gymtracker.domain.transfer.HeaderText
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlan
 import com.boykodmytr.gymtracker.domain.transfer.MeasurementTarget
+import com.boykodmytr.gymtracker.domain.transfer.ParsedProgram
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
@@ -217,6 +221,80 @@ class DataTransferRepositoryImpl @Inject constructor(
         return record.toEntry()
     }
 
+    override suspend fun programNames(): List<String> = dao.programNames()
+
+    override suspend fun applyProgramImport(
+        programs: List<ParsedProgram>,
+        targets: Map<String, ExerciseTarget>,
+        sourceName: String,
+        activate: Boolean,
+    ): TransferEntry {
+        val now = clock.instant()
+        val record = db.withTransaction {
+            val all = dao.getExercises()
+            val byId = all.associateBy { it.id }
+            val byKey = all.associateBy { HeaderText.key(it.name) }.toMutableMap()
+            val createdExercises = mutableListOf<ExerciseEntity>()
+            fun exerciseFor(name: String): ExerciseEntity = when (val target = targets.getValue(name)) {
+                is ExerciseTarget.Existing -> byId[target.id] ?: error("Exercise ${target.id} disappeared during import")
+                is ExerciseTarget.New -> byKey.getOrPut(HeaderText.key(target.name)) {
+                    ExerciseEntity(newId(), target.name.trim(), "", now, now).also { createdExercises += it }
+                }
+            }
+
+            val programDao = db.programDao()
+            val previousActive = programDao.getActiveProgram()
+            val programEntities = mutableListOf<ProgramEntity>()
+            val templates = mutableListOf<WorkoutTemplateEntity>()
+            val templateExercises = mutableListOf<TemplateExerciseEntity>()
+            for (program in programs) {
+                val programId = newId()
+                programEntities += ProgramEntity(programId, program.name, "", isActive = false, startedOn = null, createdAt = now, updatedAt = now)
+                program.workouts.forEachIndexed { workoutIndex, workout ->
+                    val templateId = newId()
+                    templates += WorkoutTemplateEntity(templateId, programId, workout.name, workoutIndex, now, now)
+                    workout.exercises.forEachIndexed { order, e ->
+                        templateExercises += TemplateExerciseEntity(
+                            id = newId(),
+                            templateId = templateId,
+                            exerciseId = exerciseFor(e.name).id,
+                            orderIndex = order,
+                            setsMin = e.target.setsMin,
+                            setsMax = e.target.setsMax,
+                            repsMin = e.target.repsMin,
+                            repsMax = e.target.repsMax,
+                            targetWeightKg = e.target.weightKg,
+                            restSeconds = e.restSeconds,
+                            notes = e.note,
+                            createdAt = now,
+                            updatedAt = now,
+                        )
+                    }
+                }
+            }
+            dao.insertExercises(createdExercises)
+            dao.insertPrograms(programEntities)
+            dao.insertTemplates(templates)
+            dao.insertTemplateExercises(templateExercises)
+            val activated = activate && programEntities.isNotEmpty()
+            if (activated) {
+                programDao.clearActive(now)
+                programDao.activate(programEntities.first().id, now.atZone(clock.zone).toLocalDate(), now)
+            }
+            TransferRecord(
+                id = newId(),
+                kind = TransferKind.PROGRAM_IMPORT.name,
+                createdAt = now.toEpochMilli(),
+                title = sourceName,
+                exerciseIds = createdExercises.map { it.id },
+                programIds = programEntities.map { it.id },
+                previousActiveProgramId = if (activated) previousActive?.id else null,
+            )
+        }
+        history.add(record)
+        return record.toEntry()
+    }
+
     override fun observeHistory(): Flow<List<TransferEntry>> = flow {
         emitAll(history.observe().filterNotNull().map { list -> list.map { it.toEntry() } })
     }
@@ -229,6 +307,14 @@ class DataTransferRepositoryImpl @Inject constructor(
                 undoMerge(merge)
                 UndoResult(0, 0, 0)
             } else {
+                // Programs first: their workouts reference the exercises created by the same import.
+                val programDao = db.programDao()
+                val wasActive = programDao.getActiveProgram()?.id in record.programIds
+                record.programIds.chunked(CHUNK).forEach { dao.deletePrograms(it) }
+                if (wasActive) {
+                    val previous = record.previousActiveProgramId?.let { programDao.getProgram(it) } ?: programDao.getFirstProgram()
+                    if (previous != null) dao.reactivateProgram(previous.id)
+                }
                 val sessions = record.sessionIds.chunked(CHUNK).sumOf { dao.deleteSessions(it) }
                 val measurements = record.measurementIds.chunked(CHUNK).sumOf { dao.deleteMeasurements(it) }
                 // Exercises the user has since put into a program or trained again stay.
@@ -326,6 +412,7 @@ class DataTransferRepositoryImpl @Inject constructor(
         sets = sets,
         measurements = measurementIds.size,
         exercisesCreated = exerciseIds.size,
+        programs = programIds.size,
         undone = undone,
     )
 

@@ -9,9 +9,12 @@ import com.boykodmytr.gymtracker.core.database.entity.BodyMeasurementEntity
 import com.boykodmytr.gymtracker.core.database.entity.ExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.ExerciseImageEntity
 import com.boykodmytr.gymtracker.core.database.entity.MeasurementTypeEntity
+import com.boykodmytr.gymtracker.core.database.entity.ProgramEntity
 import com.boykodmytr.gymtracker.core.database.entity.SessionExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.SetLogEntity
+import com.boykodmytr.gymtracker.core.database.entity.TemplateExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutSessionEntity
+import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
 import com.boykodmytr.gymtracker.core.database.relation.SessionWithExercises
 import java.time.Instant
 import java.time.LocalDate
@@ -84,6 +87,27 @@ interface TransferDao {
 
     @Query("SELECT COALESCE(MAX(order_index), -1) FROM measurement_type")
     suspend fun maxMeasurementTypeOrder(): Int
+
+    // --- Program import ---
+
+    @Query("SELECT name FROM program")
+    suspend fun programNames(): List<String>
+
+    @Insert
+    suspend fun insertPrograms(items: List<ProgramEntity>)
+
+    @Insert
+    suspend fun insertTemplates(items: List<WorkoutTemplateEntity>)
+
+    @Insert
+    suspend fun insertTemplateExercises(items: List<TemplateExerciseEntity>)
+
+    /** Makes a program active again without touching its start date (undo of an import). */
+    @Query("UPDATE program SET is_active = 1 WHERE id = :id")
+    suspend fun reactivateProgram(id: String)
+
+    @Query("DELETE FROM program WHERE id IN (:ids)")
+    suspend fun deletePrograms(ids: List<String>): Int
 
     // --- Undo an import (ids come in chunks below SQLite's variable limit) ---
 

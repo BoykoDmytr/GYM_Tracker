@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.boykodmytr.gymtracker.MainActivity
 import com.boykodmytr.gymtracker.data.seed.DataSeeder
+import com.boykodmytr.gymtracker.domain.repository.ProgramRepository
 import com.boykodmytr.gymtracker.domain.repository.WorkoutRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -41,6 +42,7 @@ class DataTransferUiTest {
 
     @Inject lateinit var seeder: DataSeeder
     @Inject lateinit var workouts: WorkoutRepository
+    @Inject lateinit var programs: ProgramRepository
 
     @Before
     fun setUp() {
@@ -109,6 +111,35 @@ class DataTransferUiTest {
         onNode(inDialog("Скасувати")).performClick()
         waitForText("Скасовано: видалено тренувань — 3, вимірів — 2.")
         assertTrue(runBlocking { workouts.observeAllCompletedSummaries().first().isEmpty() })
+    }
+
+    @Test
+    fun importProgramAndMakeItActive(): Unit = with(composeRule) {
+        val csv = File(activity.cacheDir, "Верх-Низ.csv").apply {
+            writeText(
+                "\uFEFFПрограма;Тренування;Вправа;Підходи;Повторення;Вага (кг);Відпочинок (с);Нотатка\r\n" +
+                    "Верх / Низ v11.2;Верх-А;Жим лежачи;3;5-7;60;150;Хват ширше плечей\r\n" +
+                    "Верх / Низ v11.2;Верх-А;Махи в сторони;3;8-12;7,5;90;\r\n" +
+                    "Верх / Низ v11.2;Низ;Болгарські присіди;3;8-12;16;150;на ногу\r\n",
+            )
+        }
+        openSettingsItem("Імпорт даних")
+        waitForText("Вибрати CSV-файл")
+        onNodeWithText("Вибрати CSV-файл").performClick()
+        answerPicker(Intent.ACTION_OPEN_DOCUMENT, csv)
+
+        waitForText("Буде створено програму", timeoutMillis = 10_000)
+        onNodeWithText("«Верх / Низ v11.2»: тренувань — 2, вправ — 3").assertExists()
+        screenshot("47_program_review")
+        onNode(verticalScroller).performScrollToNode(hasText("1. Жим лежачи"))
+        onNodeWithText("3×5–7 · 60 кг · 2:30").assertExists()
+
+        onAllNodesWithText("Імпортувати").onFirst().performClick()
+        waitForText("Імпорт завершено")
+        onNodeWithText("Створено програм: 1, нових вправ: 2. Програма вже в розділі «Програми».").assertExists()
+        val active = runBlocking { programs.observeActiveProgram().first()!! }
+        assertEquals("Верх / Низ v11.2", active.name)
+        assertEquals(listOf("Верх-А", "Низ"), active.workouts.map { it.name })
     }
 
     @Test

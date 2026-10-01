@@ -36,6 +36,10 @@ enum class IssueKind(val severity: IssueSeverity) {
     SAME_DATE(IssueSeverity.WARNING),
     MEASUREMENT_DUPLICATE(IssueSeverity.INFO),
     BAD_VALUE(IssueSeverity.ERROR),
+    BAD_SETS(IssueSeverity.ERROR),
+    BAD_REST(IssueSeverity.WARNING),
+    NO_WORKOUT(IssueSeverity.ERROR),
+    PROGRAM_EXISTS(IssueSeverity.WARNING),
     NO_PARAMETER(IssueSeverity.ERROR),
 }
 

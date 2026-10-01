@@ -3,10 +3,12 @@ package com.boykodmytr.gymtracker.domain.repository
 import com.boykodmytr.gymtracker.domain.model.MeasurementType
 import com.boykodmytr.gymtracker.domain.transfer.BodyImportPlan
 import com.boykodmytr.gymtracker.domain.transfer.CsvDialect
+import com.boykodmytr.gymtracker.domain.transfer.ExerciseTarget
 import com.boykodmytr.gymtracker.domain.transfer.ExistingExercise
 import com.boykodmytr.gymtracker.domain.transfer.ExistingMeasurement
 import com.boykodmytr.gymtracker.domain.transfer.ExistingSession
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlan
+import com.boykodmytr.gymtracker.domain.transfer.ParsedProgram
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
@@ -20,7 +22,7 @@ data class ImportContext(
     val measurementTypes: List<MeasurementType>,
 )
 
-enum class TransferKind { WORKOUT_IMPORT, BODY_IMPORT, EXERCISE_MERGE }
+enum class TransferKind { WORKOUT_IMPORT, BODY_IMPORT, PROGRAM_IMPORT, EXERCISE_MERGE }
 
 /** A finished import or merge that can still be undone (until it is). */
 data class TransferEntry(
@@ -33,6 +35,7 @@ data class TransferEntry(
     val sets: Int,
     val measurements: Int,
     val exercisesCreated: Int,
+    val programs: Int,
     val undone: Boolean,
 )
 
@@ -62,6 +65,21 @@ interface DataTransferRepository {
     /** Writes the whole plan in one transaction: either everything is imported or nothing is. */
     suspend fun applyWorkoutImport(plan: ImportPlan, sourceName: String): TransferEntry
     suspend fun applyBodyImport(plan: BodyImportPlan, sourceName: String): TransferEntry
+
+    /**
+     * Creates [programs] with their workouts and exercises in one transaction. [targets] maps every
+     * exercise name of the file to an app exercise or a new one. With [activate] the first program
+     * becomes the active one (undo brings the previous active program back).
+     */
+    suspend fun applyProgramImport(
+        programs: List<ParsedProgram>,
+        targets: Map<String, ExerciseTarget>,
+        sourceName: String,
+        activate: Boolean,
+    ): TransferEntry
+
+    /** Names of the programs already in the app, to warn about duplicates. */
+    suspend fun programNames(): List<String>
 
     fun observeHistory(): Flow<List<TransferEntry>>
 

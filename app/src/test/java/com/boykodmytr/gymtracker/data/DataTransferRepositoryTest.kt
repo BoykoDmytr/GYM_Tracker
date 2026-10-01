@@ -21,6 +21,8 @@ import com.boykodmytr.gymtracker.domain.transfer.CsvDialect
 import com.boykodmytr.gymtracker.domain.transfer.ExerciseTarget
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlan
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlanner
+import com.boykodmytr.gymtracker.domain.transfer.ProgramColumnMapping
+import com.boykodmytr.gymtracker.domain.transfer.ProgramFileParser
 import com.boykodmytr.gymtracker.domain.transfer.WorkoutFileParser
 import com.boykodmytr.gymtracker.testing.TEST_START
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -207,6 +209,54 @@ class DataTransferRepositoryTest {
         assertFalse(body.observeMeasurementTypes().first().any { it.name == "Біцепс (напружений)" })
         assertTrue(body.observeMeasurements("neck").first().isEmpty())
         assertEquals(1, body.observeMeasurements("waist").first().size)
+    }
+
+    @Test
+    fun programImportCreatesWorkoutsActivatesAndUndoRestoresPreviousProgram() = runBlocking {
+        val before = programs.observeActiveProgram().first()!!
+        val rows = Csv.parse(
+            """
+            Програма;Тренування;Вправа;Підходи;Повторення;Вага (кг);Відпочинок (с);Нотатка
+            Верх / Низ;Верх-А;Жим лежачи;3;5-7;60;150;хват ширше плечей
+            Верх / Низ;Верх-А;Тяга верхнього блока до грудей;3;10-12;36;150;
+            Верх / Низ;Низ;Болгарські присіди;3;8-12;16;150;
+            """.trimIndent(),
+        )
+        val file = ProgramFileParser.parse(rows, ProgramColumnMapping.detect(rows)!!, "x")
+        val context = transfer.importContext()
+        val targets = ImportPlanner.suggestMatches(ProgramFileParser.exerciseCounts(file), context.exercises).associate { it.sourceName to it.target }
+        // "Жим лежачи" is a known alias of the app's bench press; the pulldown has the same name.
+        assertEquals(ExerciseTarget.Existing(exerciseId("Жим штанги лежачи"), "Жим штанги лежачи"), targets["Жим лежачи"])
+
+        val entry = transfer.applyProgramImport(file.programs, targets, "program.csv", activate = true)
+        assertEquals(1, entry.programs)
+        assertEquals(1, entry.exercisesCreated)
+        val active = programs.observeActiveProgram().first()!!
+        assertEquals("Верх / Низ", active.name)
+        assertEquals(listOf("Верх-А", "Низ"), active.workouts.map { it.name })
+        val bench = active.workouts[0].exercises[0]
+        assertEquals("Жим штанги лежачи", bench.exercise.name)
+        assertEquals(60.0, bench.target.weightKg!!, 0.0)
+        assertEquals(150, bench.restSeconds)
+        assertEquals("хват ширше плечей", bench.notes)
+        assertTrue(programs.observePrograms().first().any { it.id == before.id && !it.isActive })
+
+        transfer.undo(entry.id)
+        assertEquals(before.id, programs.observeActiveProgram().first()!!.id)
+        assertFalse(programs.observePrograms().first().any { it.name == "Верх / Низ" })
+        assertFalse(exercises.observeExercises().first().any { it.name == "Болгарські присіди" })
+        assertTrue(exercises.observeExercises().first().any { it.name == "Жим штанги лежачи" })
+    }
+
+    @Test
+    fun programImportWithoutActivationKeepsCurrentProgram() = runBlocking {
+        val before = programs.observeActiveProgram().first()!!
+        val rows = Csv.parse("Тренування;Вправа;Підходи;Повторення\nA;Присід;3;5\n")
+        val file = ProgramFileParser.parse(rows, ProgramColumnMapping.detect(rows)!!, "Нова")
+        val targets = ImportPlanner.suggestMatches(ProgramFileParser.exerciseCounts(file), transfer.importContext().exercises).associate { it.sourceName to it.target }
+        transfer.applyProgramImport(file.programs, targets, "p.csv", activate = false)
+        assertEquals(before.id, programs.observeActiveProgram().first()!!.id)
+        assertTrue(programs.observePrograms().first().any { it.name == "Нова" && !it.isActive })
     }
 
     @Test
