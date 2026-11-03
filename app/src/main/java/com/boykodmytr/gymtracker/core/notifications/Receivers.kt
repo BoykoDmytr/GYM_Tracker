@@ -107,17 +107,19 @@ class SystemEventsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in HANDLED_ACTIONS) return
         goAsync(context) {
+            if (intent.action == ACTION_EXACT_ALARM_PERMISSION_CHANGED) timerAlertCoordinator().rescheduleArmed()
             reminderScheduler().reschedule(settingsRepository().settings.first())
         }
     }
 
     private companion object {
+        const val ACTION_EXACT_ALARM_PERMISSION_CHANGED = "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"
         val HANDLED_ACTIONS = setOf(
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
-            "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
+            ACTION_EXACT_ALARM_PERMISSION_CHANGED,
         )
     }
 }

@@ -72,21 +72,30 @@ private fun Problem(text: String, action: String, onClick: () -> Unit) {
 @Composable
 fun rememberEnableNotifications(): () -> Unit {
     val context = LocalContext.current
+    // Android offers the dialog again after one "Don't allow" (rationale = true) and stops after two.
+    // Settings open only when no dialog could have been shown: no rationale before the request and
+    // none after it. A "Don't allow" in a dialog shown just now is respected.
+    val rationaleBefore = remember { booleanArrayOf(false) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        // After a single "Don't allow" Android still offers the dialog next time: respect the answer.
-        // Once it stops offering it (no dialog was shown at all), the settings screen is the only way.
-        val activity = context.findActivity()
-        val dialogStillOffered = activity != null &&
-            ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
-        if (!granted && !dialogStillOffered) context.openAppNotificationSettings()
+        if (!granted && !rationaleBefore[0] && !context.notificationRationale()) context.openAppNotificationSettings()
     }
     return remember(context, launcher) {
         {
             val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            if (needsPermission) launcher.launch(Manifest.permission.POST_NOTIFICATIONS) else context.openAppNotificationSettings()
+            if (needsPermission) {
+                rationaleBefore[0] = context.notificationRationale()
+                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                context.openAppNotificationSettings()
+            }
         }
     }
+}
+
+private fun Context.notificationRationale(): Boolean {
+    val activity = findActivity() ?: return false
+    return ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
 }
 
 fun Context.openAppNotificationSettings() = startSettings(

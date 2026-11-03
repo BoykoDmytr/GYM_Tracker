@@ -78,6 +78,10 @@ class TimerAlertCoordinator @Inject constructor(
         if (armedEnd != endsAt) disarm(kind)
     }
 
+    /** Exact alarms were just allowed (Android 12/12L): re-schedule running timers so they become exact. */
+    @Synchronized
+    fun rescheduleArmed() = armed.forEach { (kind, endsAt) -> scheduler.schedule(kind, endsAt, sessions[kind]) }
+
     fun onAlarm(kind: TimerKind, sessionId: String? = null) = fire(kind, fromAlarm = true, alarmSessionId = sessionId)
 
     @Synchronized

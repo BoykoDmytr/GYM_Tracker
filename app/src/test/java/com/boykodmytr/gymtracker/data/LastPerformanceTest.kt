@@ -50,6 +50,7 @@ class LastPerformanceTest {
         vararg exercises: Triple<String, Double?, Double?>,
         status: SessionStatus = SessionStatus.COMPLETED,
         createdLater: Long = 0,
+        reverseInsert: Boolean = false,
     ): String = runBlocking {
         val id = "s${++counter}"
         val startedAt = now.minus(Duration.ofDays(daysAgo))
@@ -61,7 +62,10 @@ class LastPerformanceTest {
                 startedAt.plusSeconds(createdLater), startedAt,
             ),
         )
-        exercises.forEachIndexed { order, (exerciseId, planned, firstSet) ->
+        // Rows inserted in reverse make the query's order depend on order_index, not on scan order.
+        val rows = exercises.withIndex().let { if (reverseInsert) it.reversed() else it.toList() }
+        rows.forEach { (order, exercise) ->
+            val (exerciseId, planned, firstSet) = exercise
             val seId = "$id-$order"
             dao.insertSessionExercises(
                 listOf(SessionExerciseEntity(seId, id, exerciseId, exerciseId, order, 3, 3, 6, 8, planned, null, ExerciseStatus.COMPLETED, "")),
@@ -104,7 +108,7 @@ class LastPerformanceTest {
         assertEquals(31.0, last()!!.sets.first().weightKg, 0.0)
 
         // The same exercise twice in one workout: the main work, not the finisher.
-        workout(1, Triple("bench", 28.0, 32.5), Triple("row", null, 20.0), Triple("bench", 20.0, 22.5))
+        workout(1, Triple("bench", 28.0, 32.5), Triple("row", null, 20.0), Triple("bench", 20.0, 22.5), reverseInsert = true)
         assertEquals(32.5, last()!!.sets.first().weightKg, 0.0)
     }
 }

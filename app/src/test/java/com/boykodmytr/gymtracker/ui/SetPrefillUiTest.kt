@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.boykodmytr.gymtracker.MainActivity
 import com.boykodmytr.gymtracker.core.database.AppDatabase
@@ -111,6 +112,9 @@ class SetPrefillUiTest {
         startWorkout()
         openSheetAndExpect("32,5", "8")
         screenshot("50_prefill_last_time")
+        // Today the first set goes heavier than suggested.
+        onAllNodes(hasSetTextAction())[0].performTextReplacement("35")
+        onAllNodes(hasSetTextAction())[1].performTextReplacement("7")
         saveAsIs()
 
         // Superset switch: the Romanian deadlift must not inherit the bench weight.
@@ -118,11 +122,11 @@ class SetPrefillUiTest {
         openSheetAndExpect("40", "10")
         saveAsIs()
 
-        // Round done: rest, then the next round repeats today's first bench set.
+        // Round done: rest, then the next round repeats today's first bench set, not last time's.
         waitForText("Відпочинок")
         waitForText("Жим штанги лежачи")
         waitForText("Підхід 2 / 3")
-        openSheetAndExpect("32,5", "8")
+        openSheetAndExpect("35", "7")
     }
 
     @Test

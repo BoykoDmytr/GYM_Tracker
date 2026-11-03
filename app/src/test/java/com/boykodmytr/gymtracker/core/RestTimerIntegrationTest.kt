@@ -33,6 +33,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowLooper
 import java.time.Clock
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Inject
 
 /** The rest timer is armed from database state, cancelled when rest is skipped, and alerts once. */
@@ -136,15 +137,28 @@ class RestTimerIntegrationTest {
 
     @Test
     fun testAlertUsesTheRestPathWithoutTouchingTheWorkout() = runBlocking {
-        val fired = mutableListOf<TimerKind>()
+        val template = programs.observeActiveProgram().first()!!.workouts.first()
+        val sessionId = workouts.startSession(template.id)
+        val start = clock.instant()
+        workouts.startRest(sessionId, start, start.plusSeconds(120))
+        waitUntil("rest alarm scheduled") { alarms.scheduledAlarms.size == 1 }
+
+        val fired = CopyOnWriteArrayList<TimerKind>()
         val collector = launch(Dispatchers.Default) { coordinator.fired.collect { fired += it } }
         yield()
         coordinator.arm(TimerKind.TEST, clock.instant().plusSeconds(30))
-        waitUntil("test alarm scheduled") { alarms.scheduledAlarms.isNotEmpty() }
-        alarms.fireAlarm(alarms.scheduledAlarms.single())
+        waitUntil("test alarm scheduled") { alarms.scheduledAlarms.size == 2 }
+        fun kindOf(alarm: org.robolectric.shadows.ShadowAlarmManager.ScheduledAlarm) =
+            shadowOf(alarm.operation).savedIntent.getStringExtra(TimerAlarmReceiver.EXTRA_KIND)
+        alarms.fireAlarm(alarms.scheduledAlarms.single { kindOf(it) == TimerKind.TEST.name })
         ShadowLooper.idleMainLooper()
         waitUntil("test notification") { notifications.getNotification(NotificationIds.TEST_FINISHED) != null }
-        assertEquals(listOf(TimerKind.TEST), fired)
+        waitUntil("test fired") { fired.isNotEmpty() }
+        assertEquals(listOf(TimerKind.TEST), fired.toList())
+
+        // The workout's rest is untouched: still scheduled for the same workout, no rest alert.
+        val rest = alarms.scheduledAlarms.single { kindOf(it) == TimerKind.REST.name }
+        assertEquals(sessionId, shadowOf(rest.operation).savedIntent.getStringExtra(TimerAlarmReceiver.EXTRA_SESSION_ID))
         assertTrue(notifications.getNotification(NotificationIds.REST_FINISHED) == null)
         collector.cancel()
     }
