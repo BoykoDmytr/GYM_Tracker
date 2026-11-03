@@ -106,7 +106,7 @@ class SetPrefillUiTest {
     }
 
     @Test
-    fun firstSetStartsWhereLastWorkoutStarted() = with(composeRule) {
+    fun firstSetStartsWhereLastWorkoutStarted(): Unit = with(composeRule) {
         runBlocking { programs.setSupersetWithNext(bench.id, true) }
         startWorkout()
         openSheetAndExpect("32,5", "8")
@@ -124,7 +124,7 @@ class SetPrefillUiTest {
     }
 
     @Test
-    fun planChangedSinceLastWorkoutWins() = with(composeRule) {
+    fun planChangedSinceLastWorkoutWins(): Unit = with(composeRule) {
         runBlocking { programs.updateTemplateExercise(bench.id, bench.target.copy(weightKg = 35.0), bench.restSeconds, bench.notes) }
         startWorkout()
         openSheetAndExpect("35", "6")
