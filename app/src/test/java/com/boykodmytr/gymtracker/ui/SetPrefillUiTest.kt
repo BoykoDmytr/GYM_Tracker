@@ -94,7 +94,7 @@ class SetPrefillUiTest {
     }
 
     private fun openSheetAndExpect(weight: String, reps: String) = with(composeRule) {
-        onNodeWithText("Завершити підхід").performClick()
+        clickCompleteSet()
         waitForText("Зберегти")
         onAllNodes(hasSetTextAction())[0].assert(hasText(weight))
         onAllNodes(hasSetTextAction())[1].assert(hasText(reps))
@@ -118,7 +118,9 @@ class SetPrefillUiTest {
         openSheetAndExpect("40", "10")
         saveAsIs()
 
-        // Next round: repeat today's first bench set.
+        // Round done: rest, then the next round repeats today's first bench set.
+        waitForText("Відпочинок")
+        waitForText("Жим штанги лежачи")
         waitForText("Підхід 2 / 3")
         openSheetAndExpect("32,5", "8")
     }

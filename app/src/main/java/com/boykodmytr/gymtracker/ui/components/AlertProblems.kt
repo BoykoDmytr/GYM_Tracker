@@ -1,8 +1,10 @@
 package com.boykodmytr.gymtracker.ui.components
 
 import android.Manifest
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -24,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.boykodmytr.gymtracker.R
@@ -70,7 +73,12 @@ private fun Problem(text: String, action: String, onClick: () -> Unit) {
 fun rememberEnableNotifications(): () -> Unit {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (!granted) context.openAppNotificationSettings()
+        // After a single "Don't allow" Android still offers the dialog next time: respect the answer.
+        // Once it stops offering it (no dialog was shown at all), the settings screen is the only way.
+        val activity = context.findActivity()
+        val dialogStillOffered = activity != null &&
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
+        if (!granted && !dialogStillOffered) context.openAppNotificationSettings()
     }
     return remember(context, launcher) {
         {
@@ -99,6 +107,12 @@ fun Context.openExactAlarmSettings() {
 
 /** App info: where phone makers keep autostart and battery restrictions. */
 fun Context.openAppDetailsSettings() = startSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
 /** Some phone makers drop individual settings screens; fall back to the app's info page. */
 private fun Context.startSettings(intent: Intent) {

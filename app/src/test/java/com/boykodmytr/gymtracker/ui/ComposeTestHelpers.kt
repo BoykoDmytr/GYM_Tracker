@@ -10,6 +10,8 @@ import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
@@ -47,6 +49,16 @@ fun SemanticsNodeInteractionsProvider.screenshot(name: String) {
     val dir = File(System.getProperty("screenshots.dir") ?: "build/screenshots").apply { mkdirs() }
     val bitmap = onAllNodes(isRoot())[0].captureToImage().asAndroidBitmap()
     FileOutputStream(File(dir, "$name.png")).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+}
+
+/**
+ * "Завершити підхід" stays disabled until the current exercise's history has loaded (e.g. right after a
+ * superset switch); clicking it earlier does nothing.
+ */
+fun ComposeTestRule.clickCompleteSet(timeoutMillis: Long = 5_000) {
+    val enabledButton = hasText("Завершити підхід") and isEnabled()
+    waitUntil(timeoutMillis) { onAllNodes(enabledButton).fetchSemanticsNodes().isNotEmpty() }
+    onNode(enabledButton).performClick()
 }
 
 /** Matches [text] only inside a dialog, e.g. a confirm button that repeats a toolbar label. */

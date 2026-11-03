@@ -85,7 +85,7 @@ class SupersetUiTest {
     }
 
     private fun logSet(weight: String, reps: String) = with(composeRule) {
-        onNodeWithText("Завершити підхід").performClick()
+        clickCompleteSet()
         waitForText("Зберегти")
         onAllNodes(hasSetTextAction())[0].performTextReplacement(weight)
         onAllNodes(hasSetTextAction())[1].performTextReplacement(reps)

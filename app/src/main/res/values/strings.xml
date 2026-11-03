@@ -281,10 +281,10 @@
     <string name="settings_alert_troubleshoot">Сигнал не приходить або запізнюється?</string>
     <string name="settings_alert_troubleshoot_hint">На Xiaomi, Samsung та інших: увімкни автозапуск, обмеження батареї — «Без обмежень», а для сповіщень «Таймер відпочинку» — звук, вібрацію та показ на заблокованому екрані. Натисни, щоб відкрити налаштування застосунку.</string>
     <string name="settings_timer_quiet">Сигнал таймера без звуку</string>
-    <string name="settings_timer_quiet_hint">Сповіщення «Таймер відпочинку» приглушені. Натисни й увімкни для них звук.</string>
+    <string name="settings_timer_quiet_hint">Сповіщення «Таймер відпочинку» вимкнені або без звуку. Натисни й увімкни їх зі звуком або вібрацією.</string>
     <string name="alert_problem_title">Сигнал кінця відпочинку може не дійти</string>
     <string name="alert_problem_notifications">Сповіщення вимкнені: з вимкненим екраном ти не дізнаєшся, що відпочинок закінчився.</string>
-    <string name="alert_problem_channel">Сповіщення «Таймер відпочинку» приглушені — сигнал прийде без звуку.</string>
+    <string name="alert_problem_channel">Сповіщення «Таймер відпочинку» вимкнені або без звуку — сигнал не почуєш.</string>
     <string name="alert_problem_exact">Android може затримати сигнал на кілька хвилин. Дозволь «Будильники й нагадування».</string>
     <string name="alert_fix_enable">Увімкнути сповіщення</string>
     <string name="alert_fix_settings">Відкрити налаштування</string>

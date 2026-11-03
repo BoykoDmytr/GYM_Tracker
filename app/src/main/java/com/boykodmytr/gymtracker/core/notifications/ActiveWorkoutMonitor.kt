@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Clock
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -29,12 +31,15 @@ class ActiveWorkoutMonitor @Inject constructor(
 ) {
     private val started = AtomicBoolean(false)
 
+    /** The collector and [refreshNow] must not apply session states out of order. */
+    private val syncLock = Mutex()
+
     fun start() {
         if (!started.compareAndSet(false, true)) return
         scope.launch {
             val restFired = coordinator.fired.filter { it == TimerKind.REST }.map { }.onStart { emit(Unit) }
             combine(workoutRepository.observeInProgressSession(), restFired) { session, _ -> session }
-                .collect(::sync)
+                .collect { session -> syncLock.withLock { sync(session) } }
         }
     }
 
@@ -42,7 +47,10 @@ class ActiveWorkoutMonitor @Inject constructor(
      * Brings the ongoing notification up to date right away. Called by the alarm receiver while it
      * still holds the wake lock, so the lock screen stops counting a rest that has already ended.
      */
-    suspend fun refreshNow() = sync(workoutRepository.observeInProgressSession().first())
+    suspend fun refreshNow() = syncLock.withLock {
+        // Read inside the lock: a newer state the collector is waiting to apply then always lands last.
+        sync(workoutRepository.observeInProgressSession().first())
+    }
 
     private fun sync(session: WorkoutSession?) {
         if (session == null) {
