@@ -1,10 +1,7 @@
 package com.boykodmytr.gymtracker.feature.settings
 
-import android.app.AlarmManager
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,18 +40,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boykodmytr.gymtracker.R
-import com.boykodmytr.gymtracker.core.notifications.NotificationChannels
+import com.boykodmytr.gymtracker.core.notifications.AlertStatus
 import com.boykodmytr.gymtracker.domain.model.AppSettings
 import com.boykodmytr.gymtracker.domain.model.ThemeMode
 import com.boykodmytr.gymtracker.domain.model.WeightUnit
 import com.boykodmytr.gymtracker.ui.components.AppTimePickerDialog
+import com.boykodmytr.gymtracker.ui.components.openAppDetailsSettings
+import com.boykodmytr.gymtracker.ui.components.openExactAlarmSettings
+import com.boykodmytr.gymtracker.ui.components.openTimerChannelSettings
+import com.boykodmytr.gymtracker.ui.components.rememberEnableNotifications
 import com.boykodmytr.gymtracker.ui.format.Fmt
 import java.time.DayOfWeek
 
@@ -71,8 +70,7 @@ fun SettingsScreen(
     // Permissions change in system settings; re-read them whenever the screen comes back.
     var resumeCount by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumeCount++ }
-    val notificationsAllowed = remember(resumeCount) { NotificationManagerCompat.from(context).areNotificationsEnabled() }
-    val exactAlarmsAllowed = remember(resumeCount) { context.canScheduleExactAlarms() }
+    val alertStatus = remember(resumeCount) { viewModel.alertStatus() }
     var editingTimeFor by rememberSaveable { mutableStateOf<DayOfWeek?>(null) }
 
     Scaffold(
@@ -94,9 +92,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (!notificationsAllowed || !exactAlarmsAllowed) {
-                PermissionWarnings(context, notificationsAllowed, exactAlarmsAllowed)
-            }
+            if (!alertStatus.ok) PermissionWarnings(context, alertStatus)
 
             SettingsSection(stringResource(R.string.settings_schedule)) {
                 Text(stringResource(R.string.settings_schedule_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -136,6 +132,20 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_timer_channel),
                     subtitle = stringResource(R.string.settings_timer_channel_hint),
                     onClick = { context.openTimerChannelSettings() },
+                )
+                val testStarted = stringResource(R.string.settings_test_alert_started, SettingsViewModel.TEST_ALERT_SECONDS)
+                ClickRow(
+                    title = stringResource(R.string.settings_test_alert),
+                    subtitle = stringResource(R.string.settings_test_alert_hint, SettingsViewModel.TEST_ALERT_SECONDS),
+                    onClick = {
+                        viewModel.testAlert()
+                        Toast.makeText(context, testStarted, Toast.LENGTH_LONG).show()
+                    },
+                )
+                ClickRow(
+                    title = stringResource(R.string.settings_alert_troubleshoot),
+                    subtitle = stringResource(R.string.settings_alert_troubleshoot_hint),
+                    onClick = { context.openAppDetailsSettings() },
                 )
             }
 
@@ -196,20 +206,31 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun PermissionWarnings(context: Context, notificationsAllowed: Boolean, exactAlarmsAllowed: Boolean) {
+private fun PermissionWarnings(context: Context, status: AlertStatus) {
+    val enableNotifications = rememberEnableNotifications()
     SettingsSection(stringResource(R.string.settings_permissions)) {
-        if (!notificationsAllowed) {
+        if (!status.notificationsAllowed) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                 ClickRow(
                     title = stringResource(R.string.settings_notifications_off),
                     subtitle = stringResource(R.string.settings_notifications_off_hint),
-                    onClick = { context.openAppNotificationSettings() },
+                    onClick = enableNotifications,
+                    emphasized = true,
+                )
+            }
+        } else if (!status.timerChannelAudible) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                ClickRow(
+                    title = stringResource(R.string.settings_timer_quiet),
+                    subtitle = stringResource(R.string.settings_timer_quiet_hint),
+                    onClick = { context.openTimerChannelSettings() },
                     emphasized = true,
                 )
             }
         }
-        if (!exactAlarmsAllowed) {
+        if (!status.exactAlarmsAllowed) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                 ClickRow(
@@ -233,27 +254,6 @@ private fun <T> SegmentedChoice(options: List<T>, selected: T, label: @Composabl
                 shape = SegmentedButtonDefaults.itemShape(index, options.size),
             ) { Text(label(option)) }
         }
-    }
-}
-
-private fun Context.canScheduleExactAlarms(): Boolean =
-    Build.VERSION.SDK_INT < Build.VERSION_CODES.S || getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
-
-private fun Context.openAppNotificationSettings() {
-    startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
-}
-
-private fun Context.openTimerChannelSettings() {
-    startActivity(
-        Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            .putExtra(Settings.EXTRA_CHANNEL_ID, NotificationChannels.TIMER),
-    )
-}
-
-private fun Context.openExactAlarmSettings() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, "package:$packageName".toUri()))
     }
 }
 

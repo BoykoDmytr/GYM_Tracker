@@ -76,7 +76,7 @@ class WorkoutPreviewViewModel @Inject constructor(
     private val lastPerformance: Flow<Map<String, List<SetLog>>> = template
         .map { t -> t?.exercises?.map { it.exercise.id }.orEmpty() }
         .distinctUntilChanged()
-        .mapLatest { ids -> ids.associateWith { workoutRepository.lastPerformance(it) } }
+        .mapLatest { ids -> ids.associateWith { workoutRepository.lastPerformance(it)?.sets.orEmpty() } }
         .onStart { emit(emptyMap()) }
 
     val state: StateFlow<WorkoutPreviewUiState> = combine(

@@ -71,6 +71,15 @@ data class SetLog(
     val volumeKg: Double get() = weightKg * reps
 }
 
+/**
+ * The most recent completed workout in which an exercise was actually performed: its sets in order and
+ * the weight the plan asked for in that workout (session snapshot; null when the plan left it open).
+ */
+data class LastPerformance(
+    val sets: List<SetLog>,
+    val plannedWeightKg: Double?,
+)
+
 /** What the user enters after a set. */
 data class SetInput(
     val weightKg: Double,

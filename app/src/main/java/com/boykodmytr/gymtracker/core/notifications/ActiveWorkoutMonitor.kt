@@ -6,6 +6,7 @@ import com.boykodmytr.gymtracker.domain.repository.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -37,6 +38,12 @@ class ActiveWorkoutMonitor @Inject constructor(
         }
     }
 
+    /**
+     * Brings the ongoing notification up to date right away. Called by the alarm receiver while it
+     * still holds the wake lock, so the lock screen stops counting a rest that has already ended.
+     */
+    suspend fun refreshNow() = sync(workoutRepository.observeInProgressSession().first())
+
     private fun sync(session: WorkoutSession?) {
         if (session == null) {
             coordinator.disarm(TimerKind.REST)
@@ -46,8 +53,10 @@ class ActiveWorkoutMonitor @Inject constructor(
         val rest = session.rest
         when {
             rest == null -> coordinator.disarm(TimerKind.REST)
-            rest.endsAt.isAfter(clock.instant()) -> coordinator.arm(TimerKind.REST, rest.endsAt)
-            // An expired rest is left alone: its alert has fired or is being delivered right now.
+            rest.endsAt.isAfter(clock.instant()) -> coordinator.arm(TimerKind.REST, rest.endsAt, session.id)
+            // An expired rest keeps its alert (it has fired or is being delivered right now), unless
+            // the rest was cut short and a later end is still armed.
+            else -> coordinator.dropStale(TimerKind.REST, rest.endsAt)
         }
         notifier.showOngoing(session, clock.instant())
     }

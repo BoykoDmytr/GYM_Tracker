@@ -11,6 +11,7 @@ import com.boykodmytr.gymtracker.core.database.entity.WorkoutSessionEntity
 import com.boykodmytr.gymtracker.domain.model.ExerciseHistoryEntry
 import com.boykodmytr.gymtracker.domain.model.ExerciseSetRecord
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
+import com.boykodmytr.gymtracker.domain.model.LastPerformance
 import com.boykodmytr.gymtracker.domain.model.SessionStatus
 import com.boykodmytr.gymtracker.domain.model.SessionSummary
 import com.boykodmytr.gymtracker.domain.model.SetInput
@@ -174,9 +175,12 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun clearRest(sessionId: String) =
         workoutDao.setRest(sessionId, null, null, clock.instant())
 
-    override suspend fun lastPerformance(exerciseId: String, excludeSessionId: String?): List<SetLog> {
-        val sessionExerciseId = workoutDao.lastSessionExerciseId(exerciseId, excludeSessionId) ?: return emptyList()
-        return workoutDao.getSets(sessionExerciseId).map { it.toDomain() }
+    override suspend fun lastPerformance(exerciseId: String, excludeSessionId: String?): LastPerformance? {
+        val last = workoutDao.lastPerformedSessionExercise(exerciseId, excludeSessionId, clock.instant()) ?: return null
+        return LastPerformance(
+            sets = workoutDao.getSets(last.id).map { it.toDomain() },
+            plannedWeightKg = last.targetWeightKg,
+        )
     }
 
     override fun observeExerciseRecords(exerciseId: String): Flow<List<ExerciseSetRecord>> =

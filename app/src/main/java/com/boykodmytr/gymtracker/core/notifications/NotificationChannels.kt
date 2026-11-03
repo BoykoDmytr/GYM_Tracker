@@ -39,5 +39,6 @@ object NotificationIds {
     const val ONGOING_WORKOUT = 1
     const val REST_FINISHED = 2
     const val TIMER_FINISHED = 3
+    const val TEST_FINISHED = 4
     const val REMINDER = 10
 }

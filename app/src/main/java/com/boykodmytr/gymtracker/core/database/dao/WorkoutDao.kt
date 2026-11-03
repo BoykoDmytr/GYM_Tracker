@@ -106,17 +106,23 @@ interface WorkoutDao {
     )
     fun observeLastCompletedTemplateId(programId: String): Flow<String?>
 
+    /**
+     * The newest completed occurrence of an exercise that has logged sets. Sessions dated after
+     * [before] (e.g. an imported typo) are ignored; ties on the start time (imported workouts without
+     * a time start at midnight) resolve to the later-created session, then the earlier occurrence.
+     */
     @Query(
         """
-        SELECT se.id FROM session_exercise se
+        SELECT se.* FROM session_exercise se
         JOIN workout_session s ON s.id = se.session_id
         WHERE se.exercise_id = :exerciseId AND s.status = 'COMPLETED'
             AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
+            AND s.started_at <= :before
             AND EXISTS (SELECT 1 FROM set_log l WHERE l.session_exercise_id = se.id)
-        ORDER BY s.started_at DESC LIMIT 1
+        ORDER BY s.started_at DESC, s.created_at DESC, se.order_index ASC LIMIT 1
         """,
     )
-    suspend fun lastSessionExerciseId(exerciseId: String, excludeSessionId: String?): String?
+    suspend fun lastPerformedSessionExercise(exerciseId: String, excludeSessionId: String?, before: Instant): SessionExerciseEntity?
 
     @Query(
         """

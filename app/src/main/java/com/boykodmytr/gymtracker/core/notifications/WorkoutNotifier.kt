@@ -80,6 +80,7 @@ class WorkoutNotifier @Inject constructor(
         val (title, text) = when (kind) {
             TimerKind.REST -> R.string.notification_rest_over_title to R.string.notification_rest_over_text
             TimerKind.STANDALONE -> R.string.notification_timer_over_title to R.string.notification_timer_over_text
+            TimerKind.TEST -> R.string.notification_test_title to R.string.notification_test_text
         }
         val notification = NotificationCompat.Builder(context, NotificationChannels.TIMER)
             .setSmallIcon(R.drawable.ic_stat_workout)

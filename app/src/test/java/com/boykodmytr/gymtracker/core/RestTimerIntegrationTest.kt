@@ -4,6 +4,9 @@ import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
+import com.boykodmytr.gymtracker.MainActivity
+import com.boykodmytr.gymtracker.core.notifications.TimerAlarmReceiver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.boykodmytr.gymtracker.core.notifications.ActiveWorkoutMonitor
@@ -88,6 +91,10 @@ class RestTimerIntegrationTest {
         workouts.startRest(sessionId, start, start.plusSeconds(60))
         waitUntil("rest alarm re-armed") { alarms.scheduledAlarms.isNotEmpty() }
 
+        // The alarm carries the workout, so the alert opens it even if the app was killed meanwhile.
+        val alarmIntent = shadowOf(alarms.scheduledAlarms.single().operation).savedIntent
+        assertEquals(sessionId, alarmIntent.getStringExtra(TimerAlarmReceiver.EXTRA_SESSION_ID))
+
         // The system delivers the alarm while the app is in the background.
         val fired = mutableListOf<TimerKind>()
         val collector = launch(Dispatchers.Default) { coordinator.fired.collect { fired += it } }
@@ -97,6 +104,8 @@ class RestTimerIntegrationTest {
         waitUntil("rest finished notification") {
             notifications.getNotification(NotificationIds.REST_FINISHED) != null
         }
+        val opens = shadowOf(notifications.getNotification(NotificationIds.REST_FINISHED).contentIntent).savedIntent
+        assertEquals(sessionId, opens.getStringExtra(MainActivity.EXTRA_SESSION_ID))
         // A late duplicate (in-process timer or a re-sync of the same rest) must not alert again.
         coordinator.onAlarm(TimerKind.REST)
         Thread.sleep(200)
@@ -109,5 +118,42 @@ class RestTimerIntegrationTest {
         waitUntil("ongoing notification removed") {
             notifications.getNotification(NotificationIds.ONGOING_WORKOUT) == null
         }
+    }
+
+    @Test
+    fun restCutShortDropsTheOldAlarm() = runBlocking {
+        val template = programs.observeActiveProgram().first()!!.workouts.first()
+        val sessionId = workouts.startSession(template.id)
+        val start = clock.instant()
+        workouts.startRest(sessionId, start, start.plusSeconds(180))
+        waitUntil("rest alarm scheduled") { alarms.scheduledAlarms.isNotEmpty() }
+
+        // A preset shorter than the time already rested ends the rest now; the 3-minute alarm must go,
+        // or the user would get a late, wrong alert.
+        workouts.startRest(sessionId, start, clock.instant())
+        waitUntil("stale rest alarm cancelled") { alarms.scheduledAlarms.isEmpty() }
+    }
+
+    @Test
+    fun testAlertUsesTheRestPathWithoutTouchingTheWorkout() = runBlocking {
+        val fired = mutableListOf<TimerKind>()
+        val collector = launch(Dispatchers.Default) { coordinator.fired.collect { fired += it } }
+        yield()
+        coordinator.arm(TimerKind.TEST, clock.instant().plusSeconds(30))
+        waitUntil("test alarm scheduled") { alarms.scheduledAlarms.isNotEmpty() }
+        alarms.fireAlarm(alarms.scheduledAlarms.single())
+        ShadowLooper.idleMainLooper()
+        waitUntil("test notification") { notifications.getNotification(NotificationIds.TEST_FINISHED) != null }
+        assertEquals(listOf(TimerKind.TEST), fired)
+        assertTrue(notifications.getNotification(NotificationIds.REST_FINISHED) == null)
+        collector.cancel()
+    }
+
+    @Test
+    fun exactAlarmPermissionIsGrantedAtInstall() {
+        // The root cause of late rest alerts on Android 14+: SCHEDULE_EXACT_ALARM is denied by default.
+        val requested = context.packageManager
+            .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty()
+        assertTrue(Manifest.permission.USE_EXACT_ALARM in requested)
     }
 }

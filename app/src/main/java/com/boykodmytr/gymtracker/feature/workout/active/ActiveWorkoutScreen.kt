@@ -41,6 +41,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,6 +53,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boykodmytr.gymtracker.R
 import com.boykodmytr.gymtracker.domain.logic.AfterSet
@@ -61,6 +65,7 @@ import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
 import com.boykodmytr.gymtracker.domain.model.SessionExercise
 import com.boykodmytr.gymtracker.domain.model.SetLog
 import com.boykodmytr.gymtracker.domain.model.WeightUnit
+import com.boykodmytr.gymtracker.ui.components.AlertProblemsCard
 import com.boykodmytr.gymtracker.ui.components.BigButton
 import com.boykodmytr.gymtracker.ui.components.ConfirmDialog
 import com.boykodmytr.gymtracker.ui.components.SecondaryButton
@@ -112,6 +117,11 @@ fun ActiveWorkoutScreen(
     var showTechnique by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     val unit = state.settings.weightUnit
+    // Permissions and channel settings change outside the app; re-check whenever the screen comes back.
+    var resumeCount by remember { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumeCount++ }
+    val alertStatus = remember(resumeCount) { viewModel.alertStatus() }
+    var alertWarningDismissed by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -155,6 +165,7 @@ fun ActiveWorkoutScreen(
                 Surface(tonalElevation = 3.dp) {
                     BottomActions(
                         step = step,
+                        canLogSet = state.suggestedInput != null,
                         onCompleteSet = { showLogSheet = true },
                         onLeaveExercise = viewModel::leaveExercise,
                         onCompleteEarly = viewModel::completeExerciseEarly,
@@ -174,6 +185,9 @@ fun ActiveWorkoutScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (!alertStatus.ok && !alertWarningDismissed) {
+                AlertProblemsCard(status = alertStatus, onDismiss = { alertWarningDismissed = true })
+            }
             Text(
                 stringResource(R.string.workout_exercise_progress, state.exerciseNumber, state.exerciseCount),
                 style = MaterialTheme.typography.labelLarge,
@@ -217,17 +231,22 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    if (showLogSheet && step is WorkoutStep.PerformSet) {
-        SetInputSheet(
-            title = stringResource(R.string.set_result_title, step.setNumber),
-            initial = state.suggestedInput,
-            weightUnit = unit,
-            onSave = {
-                showLogSheet = false
-                viewModel.logSet(it)
-            },
-            onDismiss = { showLogSheet = false },
-        )
+    val suggested = state.suggestedInput
+    if (showLogSheet && step is WorkoutStep.PerformSet && suggested != null) {
+        // The sheet keeps what it was opened with; a new step (e.g. a quick second tap before the
+        // previous set was saved) must start it over with that step's pre-fill.
+        key(step.exercise.id, step.setNumber) {
+            SetInputSheet(
+                title = stringResource(R.string.set_result_title, step.setNumber),
+                initial = suggested,
+                weightUnit = unit,
+                onSave = {
+                    showLogSheet = false
+                    viewModel.logSet(it)
+                },
+                onDismiss = { showLogSheet = false },
+            )
+        }
     }
 
     val editingSet = editingSetId?.let { id -> session.exercises.flatMap { it.sets }.firstOrNull { it.id == id } }
@@ -410,6 +429,7 @@ private fun ExerciseDoneContent(step: WorkoutStep.ExerciseDone) {
 @Composable
 private fun BottomActions(
     step: WorkoutStep,
+    canLogSet: Boolean,
     onCompleteSet: () -> Unit,
     onLeaveExercise: () -> Unit,
     onCompleteEarly: () -> Unit,
@@ -420,7 +440,7 @@ private fun BottomActions(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (step) {
             is WorkoutStep.PerformSet -> {
-                BigButton(stringResource(R.string.workout_complete_set), onCompleteSet, icon = Icons.Filled.Check)
+                BigButton(stringResource(R.string.workout_complete_set), onCompleteSet, icon = Icons.Filled.Check, enabled = canLogSet)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SecondaryButton(stringResource(R.string.workout_skip_exercise), onLeaveExercise, Modifier.weight(1f))
                     if (WorkoutFlow.canCompleteEarly(step.exercise) && !step.isExtra) {

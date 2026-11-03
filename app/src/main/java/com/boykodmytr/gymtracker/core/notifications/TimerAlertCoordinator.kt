@@ -32,6 +32,7 @@ class TimerAlertCoordinator @Inject constructor(
     private val clock: Clock,
 ) {
     private val armed = mutableMapOf<TimerKind, Instant>()
+    private val sessions = mutableMapOf<TimerKind, String>()
     private val jobs = mutableMapOf<TimerKind, Job>()
     private val lastFired = mutableMapOf<TimerKind, Instant>()
 
@@ -41,15 +42,17 @@ class TimerAlertCoordinator @Inject constructor(
     private val _fired = MutableSharedFlow<TimerKind>(extraBufferCapacity = 8)
     val fired: SharedFlow<TimerKind> = _fired.asSharedFlow()
 
+    /** [sessionId] is the workout the alert should open when tapped. */
     @Synchronized
-    fun arm(kind: TimerKind, endsAt: Instant) {
+    fun arm(kind: TimerKind, endsAt: Instant, sessionId: String? = null) {
         if (armed[kind] == endsAt || announcedEnd[kind] == endsAt) return
         disarm(kind)
         val delayMillis = Duration.between(clock.instant(), endsAt).toMillis()
         if (delayMillis <= 0) return
         notifier.cancelTimerFinished(kind)
         armed[kind] = endsAt
-        scheduler.schedule(kind, endsAt)
+        if (sessionId != null) sessions[kind] = sessionId
+        scheduler.schedule(kind, endsAt, sessionId)
         jobs[kind] = scope.launch {
             delay(delayMillis)
             fire(kind, fromAlarm = false)
@@ -59,14 +62,26 @@ class TimerAlertCoordinator @Inject constructor(
     @Synchronized
     fun disarm(kind: TimerKind) {
         armed.remove(kind)
+        sessions.remove(kind)
         jobs.remove(kind)?.cancel()
         scheduler.cancel(kind)
     }
 
-    fun onAlarm(kind: TimerKind) = fire(kind, fromAlarm = true)
+    /**
+     * The stored end is already in the past. If it is the end that is armed, its alert is being
+     * delivered right now and stays. If a different end is armed, the user cut the rest short (e.g.
+     * a shorter preset than the time already rested): the old alert would come late, so drop it.
+     */
+    @Synchronized
+    fun dropStale(kind: TimerKind, endsAt: Instant) {
+        val armedEnd = armed[kind] ?: return
+        if (armedEnd != endsAt) disarm(kind)
+    }
+
+    fun onAlarm(kind: TimerKind, sessionId: String? = null) = fire(kind, fromAlarm = true, alarmSessionId = sessionId)
 
     @Synchronized
-    private fun fire(kind: TimerKind, fromAlarm: Boolean) {
+    private fun fire(kind: TimerKind, fromAlarm: Boolean, alarmSessionId: String? = null) {
         val now = clock.instant()
         val endsAt = armed.remove(kind)
         val wasArmed = endsAt != null
@@ -77,9 +92,10 @@ class TimerAlertCoordinator @Inject constructor(
             if (!fromAlarm || recentlyFired) return
         }
         if (fromAlarm) jobs.remove(kind)?.cancel() else scheduler.cancel(kind).also { jobs.remove(kind) }
+        val sessionId = sessions.remove(kind) ?: alarmSessionId
         lastFired[kind] = now
         if (endsAt != null) announcedEnd[kind] = endsAt
-        if (foreground.isInForeground) alertPlayer.play() else notifier.showTimerFinished(kind)
+        if (foreground.isInForeground) alertPlayer.play() else notifier.showTimerFinished(kind, sessionId)
         _fired.tryEmit(kind)
     }
 

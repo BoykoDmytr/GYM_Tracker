@@ -4,14 +4,18 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.boykodmytr.gymtracker.core.notifications.AlertReadiness
+import com.boykodmytr.gymtracker.core.notifications.AlertStatus
 import com.boykodmytr.gymtracker.domain.logic.AfterSet
 import com.boykodmytr.gymtracker.domain.logic.ProgressionAdvisor
 import com.boykodmytr.gymtracker.domain.logic.ProgressionHint
+import com.boykodmytr.gymtracker.domain.logic.SetSuggestion
 import com.boykodmytr.gymtracker.domain.logic.WorkoutFlow
 import com.boykodmytr.gymtracker.domain.logic.WorkoutStep
 import com.boykodmytr.gymtracker.domain.model.AppSettings
 import com.boykodmytr.gymtracker.domain.model.ExerciseDetails
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
+import com.boykodmytr.gymtracker.domain.model.LastPerformance
 import com.boykodmytr.gymtracker.domain.model.SessionExercise
 import com.boykodmytr.gymtracker.domain.model.SessionStatus
 import com.boykodmytr.gymtracker.domain.model.SetInput
@@ -55,7 +59,8 @@ data class ActiveWorkoutUiState(
     val lastPerformance: List<SetLog> = emptyList(),
     val hint: ProgressionHint? = null,
     val technique: ExerciseDetails? = null,
-    val suggestedInput: SetInput = SetInput(0.0, 0),
+    /** Pre-filled result for the next set; null while the current exercise's history is loading. */
+    val suggestedInput: SetInput? = null,
     val restSeconds: Int = AppSettings().defaultRestSeconds,
     val settings: AppSettings = AppSettings(),
     /** The current exercise's superset in order; empty when it is done on its own. */
@@ -81,6 +86,7 @@ class ActiveWorkoutViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     exerciseRepository: ExerciseRepository,
     private val settingsRepository: SettingsRepository,
+    private val alertReadiness: AlertReadiness,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -106,9 +112,13 @@ class ActiveWorkoutViewModel @Inject constructor(
         .map { s -> s?.let(WorkoutFlow::currentExercise)?.exerciseId }
         .distinctUntilChanged()
 
+    /**
+     * Last time's data tagged with the exercise it was loaded for. Right after the current exercise
+     * changes (next exercise, superset switch) the previous exercise's data is still here; the tag
+     * keeps it from being shown or pre-filled for the new one.
+     */
     private val lastPerformance = currentExerciseId
-        .mapLatest { id -> if (id == null) emptyList() else workoutRepository.lastPerformance(id, sessionId) }
-        .onStart { emit(emptyList()) }
+        .mapLatest { id -> LoadedLast(id, id?.let { workoutRepository.lastPerformance(it, sessionId) }) }
 
     private val technique = currentExerciseId
         .flatMapLatest { id -> if (id == null) flowOf(null) else exerciseRepository.observeExercise(id) }
@@ -120,13 +130,15 @@ class ActiveWorkoutViewModel @Inject constructor(
         technique,
         settingsRepository.settings,
         extraSetFor,
-    ) { (session, leaving), last, technique, settings, extraFor ->
+    ) { (session, leaving), loaded, technique, settings, extraFor ->
         if (session == null || session.status == SessionStatus.COMPLETED) {
             // Closed elsewhere (e.g. from Home) → leave; closed by us → wait for the event.
             return@combine ActiveWorkoutUiState(loading = leaving, closed = !leaving)
         }
         val current = WorkoutFlow.currentExercise(session)
         val step = WorkoutFlow.step(session, extraSetRequested = current != null && extraFor == current.id)
+        val last = loaded.takeIf { current != null && it.exerciseId == current.exerciseId }
+        val lastSets = last?.data?.sets.orEmpty()
         val ordered = WorkoutFlow.ordered(session)
         val superset = current?.let { WorkoutFlow.supersetOf(session, it) }?.takeIf { it.size > 1 }.orEmpty()
         ActiveWorkoutUiState(
@@ -136,10 +148,10 @@ class ActiveWorkoutViewModel @Inject constructor(
             exerciseNumber = ordered.indexOfFirst { it.id == current?.id } + 1,
             exerciseCount = ordered.size,
             closedExercises = ordered.count { it.status != ExerciseStatus.PENDING || it.sets.size >= it.target.setsMax },
-            lastPerformance = last,
-            hint = current?.let { ProgressionAdvisor.hint(last, it.target) },
+            lastPerformance = lastSets,
+            hint = current?.let { ProgressionAdvisor.hint(lastSets, it.target) },
             technique = technique,
-            suggestedInput = suggestInput(step, last),
+            suggestedInput = if (current == null || last != null) suggestInput(step, last?.data) else null,
             restSeconds = current?.restSeconds ?: settings.defaultRestSeconds,
             settings = settings,
             superset = superset,
@@ -147,14 +159,9 @@ class ActiveWorkoutViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ActiveWorkoutUiState())
 
-    /** Pre-fills the result sheet: repeat this workout's previous set, else last time's matching set. */
-    private fun suggestInput(step: WorkoutStep?, last: List<SetLog>): SetInput {
+    private fun suggestInput(step: WorkoutStep?, last: LastPerformance?): SetInput {
         val exercise = (step as? WorkoutStep.PerformSet)?.exercise ?: return SetInput(0.0, 0)
-        val previous = exercise.sets.lastOrNull()
-        val lastTimeSame = last.getOrNull(step.setNumber - 1) ?: last.lastOrNull()
-        val weight = previous?.weightKg ?: exercise.target.weightKg ?: lastTimeSame?.weightKg ?: 0.0
-        val reps = previous?.reps ?: lastTimeSame?.reps ?: exercise.target.repsMin
-        return SetInput(weightKg = weight, reps = reps)
+        return SetSuggestion.suggest(exercise, last)
     }
 
     private suspend fun currentSession(): WorkoutSession? = session.first()
@@ -180,6 +187,9 @@ class ActiveWorkoutViewModel @Inject constructor(
             workoutRepository.clearRest(sessionId)
         }
     }
+
+    /** Whether the end of a rest will reach the user with the screen off. Re-checked on every resume. */
+    fun alertStatus(): AlertStatus = alertReadiness.check()
 
     fun updateSet(setId: String, input: SetInput) = launch { workoutRepository.updateSet(setId, input) }
 
@@ -254,6 +264,8 @@ class ActiveWorkoutViewModel @Inject constructor(
         viewModelScope.launch { block() }
     }
 }
+
+private data class LoadedLast(val exerciseId: String?, val data: LastPerformance?)
 
 internal val SessionExercise.isClosed: Boolean
     get() = status != ExerciseStatus.PENDING || sets.size >= target.setsMax

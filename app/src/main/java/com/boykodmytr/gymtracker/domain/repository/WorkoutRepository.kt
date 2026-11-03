@@ -5,6 +5,7 @@ import com.boykodmytr.gymtracker.domain.model.ExerciseSetRecord
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
 import com.boykodmytr.gymtracker.domain.model.SessionSummary
 import com.boykodmytr.gymtracker.domain.model.SetInput
+import com.boykodmytr.gymtracker.domain.model.LastPerformance
 import com.boykodmytr.gymtracker.domain.model.SetLog
 import com.boykodmytr.gymtracker.domain.model.WorkoutSession
 import kotlinx.coroutines.flow.Flow
@@ -35,8 +36,11 @@ interface WorkoutRepository {
     suspend fun startRest(sessionId: String, startedAt: Instant, endsAt: Instant)
     suspend fun clearRest(sessionId: String)
 
-    /** Sets from the most recent completed workout that contained this exercise. */
-    suspend fun lastPerformance(exerciseId: String, excludeSessionId: String? = null): List<SetLog>
+    /**
+     * The most recent completed workout (not later than now) in which this exercise has logged sets,
+     * or null when it was never performed.
+     */
+    suspend fun lastPerformance(exerciseId: String, excludeSessionId: String? = null): LastPerformance?
     fun observeExerciseRecords(exerciseId: String): Flow<List<ExerciseSetRecord>>
     fun observeAllExerciseRecords(): Flow<List<ExerciseSetRecord>>
     fun observeExercisesWithHistory(): Flow<List<ExerciseHistoryEntry>>

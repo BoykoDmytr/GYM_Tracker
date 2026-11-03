@@ -40,7 +40,7 @@ suspend fun seedHistory(db: AppDatabase, program: Program, today: LocalDate, mis
                 listOf(
                     SessionExerciseEntity(
                         seId, sessionId, te.exercise.id, te.exercise.name, order, te.target.setsMin, te.target.setsMax,
-                        te.target.repsMin, te.target.repsMax, null, null, ExerciseStatus.COMPLETED, "",
+                        te.target.repsMin, te.target.repsMax, te.target.weightKg, te.restSeconds, ExerciseStatus.COMPLETED, "",
                     ),
                 ),
             )

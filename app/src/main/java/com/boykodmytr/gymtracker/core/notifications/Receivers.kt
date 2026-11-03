@@ -24,6 +24,7 @@ import java.time.LocalDate
 @InstallIn(SingletonComponent::class)
 interface ReceiverEntryPoint {
     fun timerAlertCoordinator(): TimerAlertCoordinator
+    fun activeWorkoutMonitor(): ActiveWorkoutMonitor
     fun reminderScheduler(): ReminderScheduler
     fun workoutNotifier(): WorkoutNotifier
     fun settingsRepository(): SettingsRepository
@@ -55,12 +56,18 @@ class TimerAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_TIMER_FINISHED) return
         val kind = intent.getStringExtra(EXTRA_KIND)?.let { name -> TimerKind.entries.firstOrNull { it.name == name } } ?: return
-        context.entryPoint().timerAlertCoordinator().onAlarm(kind)
+        val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
+        // The alarm woke the phone; keep it awake until the alert and the ongoing notification are posted.
+        goAsync(context) {
+            timerAlertCoordinator().onAlarm(kind, sessionId)
+            if (kind == TimerKind.REST) activeWorkoutMonitor().refreshNow()
+        }
     }
 
     companion object {
         const val ACTION_TIMER_FINISHED = "com.boykodmytr.gymtracker.action.TIMER_FINISHED"
         const val EXTRA_KIND = "kind"
+        const val EXTRA_SESSION_ID = "session_id"
     }
 }
 

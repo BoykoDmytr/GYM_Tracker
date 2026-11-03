@@ -2,6 +2,10 @@ package com.boykodmytr.gymtracker.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.boykodmytr.gymtracker.core.notifications.AlertReadiness
+import com.boykodmytr.gymtracker.core.notifications.AlertStatus
+import com.boykodmytr.gymtracker.core.notifications.TimerAlertCoordinator
+import com.boykodmytr.gymtracker.core.notifications.TimerKind
 import com.boykodmytr.gymtracker.domain.model.AppSettings
 import com.boykodmytr.gymtracker.domain.model.ThemeMode
 import com.boykodmytr.gymtracker.domain.model.TrainingDay
@@ -12,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
@@ -19,6 +24,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
+    private val alertReadiness: AlertReadiness,
+    private val alertCoordinator: TimerAlertCoordinator,
+    private val clock: Clock,
 ) : ViewModel() {
 
     val settings: StateFlow<AppSettings?> = repository.settings
@@ -45,6 +53,14 @@ class SettingsViewModel @Inject constructor(
     fun setVibration(enabled: Boolean) = launch { repository.setTimerVibration(enabled) }
     fun setKeepScreenOn(enabled: Boolean) = launch { repository.setKeepScreenOn(enabled) }
 
+    fun alertStatus(): AlertStatus = alertReadiness.check()
+
+    /**
+     * Sends a test alert through the same path as a rest end, so the user can lock the screen and hear
+     * whether it arrives on time. Long enough that an inexact alarm would visibly come late.
+     */
+    fun testAlert() = alertCoordinator.arm(TimerKind.TEST, clock.instant().plusSeconds(TEST_ALERT_SECONDS.toLong()))
+
     private fun updateDays(transform: (List<TrainingDay>) -> List<TrainingDay>) = launch {
         val current = settings.value?.trainingDays ?: return@launch
         repository.setTrainingDays(transform(current).distinctBy { it.dayOfWeek }.sortedBy { it.dayOfWeek })
@@ -52,5 +68,9 @@ class SettingsViewModel @Inject constructor(
 
     private fun launch(block: suspend () -> Unit) {
         viewModelScope.launch { block() }
+    }
+
+    companion object {
+        const val TEST_ALERT_SECONDS = 30
     }
 }
