@@ -2,9 +2,8 @@ package com.boykodmytr.gymtracker.data
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.boykodmytr.gymtracker.core.database.AppDatabase
-import com.boykodmytr.gymtracker.data.seed.BuiltInPrograms
 import com.boykodmytr.gymtracker.data.seed.DataSeeder
-import com.boykodmytr.gymtracker.data.seed.StarterProgram
+import com.boykodmytr.gymtracker.di.SeedModule
 import com.boykodmytr.gymtracker.domain.logic.WorkoutFlow
 import com.boykodmytr.gymtracker.domain.repository.ProgramRepository
 import com.boykodmytr.gymtracker.domain.repository.SettingsRepository
@@ -43,8 +42,8 @@ class StarterProgramSeedTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        // The production starter program, not the fixture the UI tests use.
-        seeder = DataSeeder(db, settings, StarterProgram(BuiltInPrograms.fullBodyV11, BuiltInPrograms.fullBodyV11Days), clock)
+        // What real installs get (the Hilt binding the UI tests replace with a fixture).
+        seeder = DataSeeder(db, settings, SeedModule.provideStarterProgram(), clock)
     }
 
     @Test

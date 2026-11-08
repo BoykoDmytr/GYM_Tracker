@@ -61,8 +61,12 @@ class BuiltInProgramUiTest {
         waitForText("Готова програма з застосунку", substring = true)
         onNode(verticalScroller).performScrollToNode(hasText("3. Махи гантелями в сторони"))
         onAllNodesWithText("4×8–15 · 8,5 кг · 3 хв · суперсет 1").onFirst().assertExists()
+        // Day Б has two supersets: numbered within the day.
+        onNode(verticalScroller).performScrollToNode(hasText("6. Підйоми на носки стоячи"))
+        onNodeWithText("3×10–15 · 24 кг · 3 хв · суперсет 2").assertExists()
         screenshot("61_built_in_review")
 
+        onNode(verticalScroller).performScrollToNode(hasText("Імпортувати"))
         onAllNodesWithText("Імпортувати").onFirst().performClick()
         waitForText("Імпорт завершено")
 
