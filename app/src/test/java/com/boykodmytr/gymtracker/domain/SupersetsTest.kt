@@ -54,6 +54,11 @@ class SupersetsTest {
     }
 
     @Test
+    fun `a dash or other punctuation means no superset`() {
+        assertEquals(listOf(null, null, "n1", "n1"), Supersets.fromLabels(listOf("-", "—", "1", "1."), newId))
+    }
+
+    @Test
     fun `a label used again further down starts a new superset, a lone label is none`() {
         assertEquals(listOf("n1", "n1", null, "n2", "n2", null), Supersets.fromLabels(listOf("А", "а", null, "А", "А", "Б"), newId))
     }

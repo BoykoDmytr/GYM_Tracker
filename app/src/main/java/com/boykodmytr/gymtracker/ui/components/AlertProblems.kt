@@ -94,6 +94,7 @@ fun rememberEnableNotifications(): () -> Unit {
 }
 
 private fun Context.notificationRationale(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
     val activity = findActivity() ?: return false
     return ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
 }

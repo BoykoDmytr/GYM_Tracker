@@ -119,7 +119,11 @@ class DataImportViewModel @Inject constructor(
     private var context: ImportContext? = null
 
     init {
-        if (savedStateHandle.toRoute<DataImportRoute>().builtInProgram) openBuiltIn(BuiltInPrograms.fullBodyV11)
+        // Only once per screen: after the app is restored the user may already be past the review.
+        if (savedStateHandle.toRoute<DataImportRoute>().builtInProgram && savedStateHandle.get<Boolean>(BUILT_IN_OPENED) != true) {
+            savedStateHandle[BUILT_IN_OPENED] = true
+            openBuiltIn(BuiltInPrograms.fullBodyV11)
+        }
     }
 
     /**
@@ -130,9 +134,18 @@ class DataImportViewModel @Inject constructor(
     fun openBuiltIn(program: ParsedProgram) {
         viewModelScope.launch {
             _step.value = ImportStep.Working
-            val ctx = repository.importContext().also { context = it }
-            val file = ParsedProgramFile(listOf(program), emptyList())
-            _step.value = ImportStep.ReviewProgram(programReview(program.name, charset = "", delimiter = null, file = file, ctx = ctx))
+            _step.value = try {
+                val ctx = repository.importContext().also { context = it }
+                val file = ParsedProgramFile(listOf(program), emptyList())
+                withContext(Dispatchers.Default) {
+                    ImportStep.ReviewProgram(programReview(program.name, charset = "", delimiter = null, file = file, ctx = ctx))
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Cannot open the built-in program", e)
+                ImportStep.Failed(FailureReason.IMPORT_FAILED, e.message)
+            }
         }
     }
 
@@ -279,6 +292,7 @@ class DataImportViewModel @Inject constructor(
 
     private companion object {
         const val TAG = "DataImport"
+        const val BUILT_IN_OPENED = "built_in_opened"
         const val WEIGHT_TYPE = "weight"
 
         /** "Журнал - Понеділок.csv" → "Журнал - Понеділок": the workout name when the file has none. */

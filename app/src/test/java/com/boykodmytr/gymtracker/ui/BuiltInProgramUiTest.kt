@@ -60,7 +60,7 @@ class BuiltInProgramUiTest {
         onNodeWithText("«Тренування v11: фулбаді ×3»: тренувань — 3, вправ — 19").assertExists()
         waitForText("Готова програма з застосунку", substring = true)
         onNode(verticalScroller).performScrollToNode(hasText("3. Махи гантелями в сторони"))
-        onAllNodesWithText("4×8–15 · 8,5 кг · 3 хв · суперсет").onFirst().assertExists()
+        onAllNodesWithText("4×8–15 · 8,5 кг · 3 хв · суперсет 1").onFirst().assertExists()
         screenshot("61_built_in_review")
 
         onAllNodesWithText("Імпортувати").onFirst().performClick()

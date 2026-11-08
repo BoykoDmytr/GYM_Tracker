@@ -35,7 +35,7 @@ data class AppSettings(
     val trainingDaysPerWeek: Int get() = trainingDays.size
 
     companion object {
-        val REST_PRESETS_SECONDS = listOf(30, 60, 90, 120, 180)
+        val REST_PRESETS_SECONDS = listOf(30, 60, 90, 120, 150, 180)
         val DEFAULT_TRAINING_DAYS = listOf(
             TrainingDay(DayOfWeek.MONDAY, LocalTime.of(18, 0)),
             TrainingDay(DayOfWeek.WEDNESDAY, LocalTime.of(18, 0)),

@@ -9,6 +9,7 @@ import com.boykodmytr.gymtracker.core.database.entity.ProgramEntity
 import com.boykodmytr.gymtracker.core.database.entity.TemplateExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
 import com.boykodmytr.gymtracker.domain.logic.Supersets
+import com.boykodmytr.gymtracker.domain.model.TrainingDay
 import com.boykodmytr.gymtracker.domain.repository.SettingsRepository
 import com.boykodmytr.gymtracker.domain.transfer.ParsedProgram
 import java.time.Clock
@@ -16,8 +17,11 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** The program a fresh install starts with, as its active program. Tests swap in a stable fixture. */
-data class StarterProgram(val program: ParsedProgram)
+/**
+ * The program a fresh install starts with, as its active program, and the training days it is meant
+ * for (null keeps the app's defaults). Tests swap in a stable fixture.
+ */
+data class StarterProgram(val program: ParsedProgram, val trainingDays: List<TrainingDay>? = null)
 
 /**
  * Inserts the starter program and measurement types once. Guarded by a version flag instead of
@@ -34,10 +38,11 @@ class DataSeeder @Inject constructor(
     suspend fun seedIfNeeded() {
         settings.ensureTrackingStartDate(LocalDate.now(clock))
         if (settings.seedVersion() >= SEED_VERSION) return
-        db.withTransaction {
+        val freshInstall = db.withTransaction {
             insertMeasurementTypes()
-            if (db.programDao().countPrograms() == 0) insertProgram(starter.program)
+            (db.programDao().countPrograms() == 0).also { if (it) insertProgram(starter.program) }
         }
+        if (freshInstall) starter.trainingDays?.let { settings.setTrainingDays(it) }
         settings.setSeedVersion(SEED_VERSION)
     }
 

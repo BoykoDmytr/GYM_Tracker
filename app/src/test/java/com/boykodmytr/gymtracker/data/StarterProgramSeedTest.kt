@@ -22,6 +22,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Clock
+import java.time.DayOfWeek
 import javax.inject.Inject
 
 /** A fresh install starts with the real built-in program, ready to train: supersets, rest, weights. */
@@ -43,7 +44,7 @@ class StarterProgramSeedTest {
     fun setUp() {
         hiltRule.inject()
         // The production starter program, not the fixture the UI tests use.
-        seeder = DataSeeder(db, settings, StarterProgram(BuiltInPrograms.fullBodyV11), clock)
+        seeder = DataSeeder(db, settings, StarterProgram(BuiltInPrograms.fullBodyV11, BuiltInPrograms.fullBodyV11Days), clock)
     }
 
     @Test
@@ -67,6 +68,12 @@ class StarterProgramSeedTest {
 
         // Laterals on days A and C are one exercise, so their history is shared.
         assertEquals(dayA[2].exercise.id, program.workouts[2].exercises[2].exercise.id)
+
+        // The week the program is written for: Tue A · Thu Б · Sat В.
+        assertEquals(
+            listOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY, DayOfWeek.SATURDAY),
+            settings.settings.first().trainingDays.map { it.dayOfWeek },
+        )
 
         // Seeding again changes nothing.
         seeder.seedIfNeeded()

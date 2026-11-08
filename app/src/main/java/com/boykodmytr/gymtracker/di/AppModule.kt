@@ -64,7 +64,7 @@ object ClockModule {
 @InstallIn(SingletonComponent::class)
 object SeedModule {
     @Provides
-    fun provideStarterProgram(): StarterProgram = StarterProgram(BuiltInPrograms.fullBodyV11)
+    fun provideStarterProgram(): StarterProgram = StarterProgram(BuiltInPrograms.fullBodyV11, BuiltInPrograms.fullBodyV11Days)
 }
 
 @Module

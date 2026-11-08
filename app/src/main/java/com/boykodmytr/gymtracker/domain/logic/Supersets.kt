@@ -1,5 +1,7 @@
 package com.boykodmytr.gymtracker.domain.logic
 
+import com.boykodmytr.gymtracker.domain.transfer.HeaderText
+
 /**
  * Supersets are stored as a shared id on neighbouring exercises. These functions work on the ids of a
  * workout's exercises in order and always return a normalized list: every id marks one contiguous run
@@ -65,13 +67,14 @@ object Supersets {
 
     /**
      * Supersets written as labels, e.g. a program file's «Суперсет» column: neighbouring exercises with
-     * the same label (case and spaces ignored) form one superset. Returns normalized ids.
+     * the same label form one superset. Returns normalized ids.
      */
     fun fromLabels(labels: List<String?>, newId: () -> String): List<String?> {
         val ids = mutableListOf<String?>()
         var previousKey: String? = null
         for (label in labels) {
-            val key = label?.trim()?.lowercase()?.replace(Regex("\\s+"), " ")?.takeIf { it.isNotEmpty() }
+            // Case, spaces and punctuation are ignored, so "-" or "—" (a common "none") is no label.
+            val key = label?.let(HeaderText::key)?.takeIf { it.isNotEmpty() }
             ids += when {
                 key == null -> null
                 key == previousKey -> ids.last()

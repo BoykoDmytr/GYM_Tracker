@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boykodmytr.gymtracker.R
+import com.boykodmytr.gymtracker.domain.logic.Supersets
 import com.boykodmytr.gymtracker.domain.repository.TransferEntry
 import com.boykodmytr.gymtracker.domain.repository.TransferKind
 import com.boykodmytr.gymtracker.domain.transfer.ExerciseMatch
@@ -290,13 +291,18 @@ private fun androidx.compose.foundation.lazy.LazyListScope.programReview(
             item(key = "workout-${program.name}-$index") {
                 SectionCard(title = if (programs.size > 1) "${program.name} · ${workout.name}" else workout.name) {
                     val supersetLabel = stringResource(R.string.superset_label).lowercase()
+                    // The supersets as they will be saved: a lone label is none, a new label is a new one.
+                    val groups = remember(workout) {
+                        var n = 0
+                        Supersets.groups(Supersets.fromLabels(workout.exercises.map { it.superset }) { "${n++}" })
+                    }
                     workout.exercises.forEachIndexed { order, e ->
                         val t = e.target
                         val details = listOfNotNull(
                             "${Fmt.range(t.setsMin, t.setsMax)}×${Fmt.range(t.repsMin, t.repsMax)}",
                             t.weightKg?.let { "${Fmt.number(it)} кг" },
                             e.restSeconds?.let { Fmt.restLabel(it) },
-                            e.superset?.let { supersetLabel },
+                            groups.indexOfFirst { order in it }.takeIf { it >= 0 }?.let { "$supersetLabel ${it + 1}" },
                         ).joinToString(" · ")
                         Text("${order + 1}. ${e.name}", style = MaterialTheme.typography.bodyMedium)
                         Hint(details)
