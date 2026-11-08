@@ -12,6 +12,9 @@ enum class ProgramField(val synonyms: List<String>) {
     WEIGHT(listOf("вага", "вага кг", "робоча вага", "стартова вага", "weight", "weight kg", "вес")),
     REST(listOf("відпочинок", "відпочинок с", "відпочинок сек", "rest", "rest s", "rest sec", "отдых")),
     NOTE(listOf("нотатка", "нотатки", "примітка", "техніка", "note", "notes", "заметка")),
+
+    /** Neighbouring rows with the same value (e.g. "1", "А") are done as a superset. */
+    SUPERSET(listOf("суперсет", "супер сет", "superset", "суперсеты")),
 }
 
 /**
@@ -45,11 +48,13 @@ data class ParsedProgramExercise(
     val restSeconds: Int?,
     val note: String,
     val row: Int,
+    /** Superset label as written; neighbouring exercises with the same label form one superset. */
+    val superset: String? = null,
 )
 
 data class ParsedProgramWorkout(val name: String, val exercises: List<ParsedProgramExercise>)
 
-data class ParsedProgram(val name: String, val workouts: List<ParsedProgramWorkout>) {
+data class ParsedProgram(val name: String, val workouts: List<ParsedProgramWorkout>, val description: String = "") {
     val exerciseCount: Int get() = workouts.sumOf { it.exercises.size }
 }
 
@@ -58,7 +63,8 @@ data class ParsedProgramFile(val programs: List<ParsedProgram>, val issues: List
 /**
  * Reads a training program: one row per exercise, in the order they are done; rows with the same
  * workout name form one workout, workouts keep the order of their first row (that order is the
- * A → B → C rotation). Several program names in one file give several programs.
+ * A → B → C rotation). Several program names in one file give several programs. Neighbouring rows
+ * with the same «Суперсет» value are done as a superset.
  */
 object ProgramFileParser {
 
@@ -99,6 +105,7 @@ object ProgramFileParser {
                 restSeconds = rest,
                 note = Csv.unguardText(cell(row, ProgramField.NOTE)),
                 row = line,
+                superset = cell(row, ProgramField.SUPERSET).takeIf { it.isNotEmpty() },
             )
         }
         return ParsedProgramFile(

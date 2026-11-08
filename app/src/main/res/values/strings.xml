@@ -433,6 +433,10 @@
     <string name="issue_no_parameter">немає назви параметра, пропущено</string>
 
     <string name="import_program_summary_title">Буде створено програму</string>
+    <string name="import_built_in_hint">Готова програма з застосунку: вправи, відпочинок і суперсети вже налаштовані. Перевір, з якими твоїми вправами зіставлено назви — тоді історія й підказки ваги лишаться з ними.</string>
+    <string name="programs_built_in">Готова програма</string>
+    <string name="programs_built_in_summary">%1$s · вправ: %2$d. Відпочинок і суперсети вже налаштовані.</string>
+    <string name="programs_built_in_add">Додати</string>
     <string name="import_program_line">«%1$s»: тренувань — %2$d, вправ — %3$d</string>
     <string name="import_program_activate">Зробити активною програмою</string>
     <string name="import_program_activate_hint">Головний екран і ротація тренувань перейдуть на неї. Поточну програму не видалено — її можна повернути в «Програмах».</string>

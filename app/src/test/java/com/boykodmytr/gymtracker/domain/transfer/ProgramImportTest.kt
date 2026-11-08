@@ -77,4 +77,17 @@ class ProgramImportTest {
         assertEquals(150, ProgramFileParser.restSeconds("2,5 хв"))
         assertNull(ProgramFileParser.restSeconds("2-3 хв"))
     }
+
+    @Test
+    fun `neighbouring rows with the same superset value are a superset`() {
+        val text = """
+            Тренування;Вправа;Підходи;Повторення;Відпочинок;Суперсет
+            День А;Жим штанги лежачи;3;4-6;3 хв;
+            День А;Махи гантелями в сторони;4;8-15;3 хв;1
+            День А;Розгинання над головою з гантеллю (трицепс);4;8-15;3 хв;1
+        """.trimIndent()
+        val workout = parse(text).programs.single().workouts.single()
+        assertEquals(listOf(null, "1", "1"), workout.exercises.map { it.superset })
+        assertEquals(listOf(180, 180, 180), workout.exercises.map { it.restSeconds })
+    }
 }

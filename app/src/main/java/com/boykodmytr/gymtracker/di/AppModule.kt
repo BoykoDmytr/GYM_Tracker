@@ -15,6 +15,8 @@ import com.boykodmytr.gymtracker.core.database.dao.BodyDao
 import com.boykodmytr.gymtracker.core.database.dao.ExerciseDao
 import com.boykodmytr.gymtracker.core.database.dao.ProgramDao
 import com.boykodmytr.gymtracker.core.database.dao.WorkoutDao
+import com.boykodmytr.gymtracker.data.seed.BuiltInPrograms
+import com.boykodmytr.gymtracker.data.seed.StarterProgram
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -56,6 +58,13 @@ object ClockModule {
     @Provides
     @Singleton
     fun provideClock(): Clock = Clock.systemDefaultZone()
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object SeedModule {
+    @Provides
+    fun provideStarterProgram(): StarterProgram = StarterProgram(BuiltInPrograms.fullBodyV11)
 }
 
 @Module

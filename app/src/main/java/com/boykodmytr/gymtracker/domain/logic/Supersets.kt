@@ -63,6 +63,25 @@ object Supersets {
         return result
     }
 
+    /**
+     * Supersets written as labels, e.g. a program file's «Суперсет» column: neighbouring exercises with
+     * the same label (case and spaces ignored) form one superset. Returns normalized ids.
+     */
+    fun fromLabels(labels: List<String?>, newId: () -> String): List<String?> {
+        val ids = mutableListOf<String?>()
+        var previousKey: String? = null
+        for (label in labels) {
+            val key = label?.trim()?.lowercase()?.replace(Regex("\\s+"), " ")?.takeIf { it.isNotEmpty() }
+            ids += when {
+                key == null -> null
+                key == previousKey -> ids.last()
+                else -> newId()
+            }
+            previousKey = key
+        }
+        return normalize(ids, newId)
+    }
+
     /** Index ranges of the supersets in [ids] (normalized input expected). */
     fun groups(ids: List<String?>): List<IntRange> {
         val ranges = mutableListOf<IntRange>()

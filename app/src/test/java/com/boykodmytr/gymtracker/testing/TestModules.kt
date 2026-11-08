@@ -10,9 +10,11 @@ import com.boykodmytr.gymtracker.core.database.dao.BodyDao
 import com.boykodmytr.gymtracker.core.database.dao.ExerciseDao
 import com.boykodmytr.gymtracker.core.database.dao.ProgramDao
 import com.boykodmytr.gymtracker.core.database.dao.WorkoutDao
+import com.boykodmytr.gymtracker.data.seed.StarterProgram
 import com.boykodmytr.gymtracker.di.ClockModule
 import com.boykodmytr.gymtracker.di.DataStoreModule
 import com.boykodmytr.gymtracker.di.DatabaseModule
+import com.boykodmytr.gymtracker.di.SeedModule
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +27,13 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.Singleton
+
+@Module
+@TestInstallIn(components = [SingletonComponent::class], replaces = [SeedModule::class])
+object TestSeedModule {
+    @Provides
+    fun starterProgram(): StarterProgram = StarterProgram(LegacyStarterProgram.program)
+}
 
 /** Monday 28 Sep 2026, 10:00 in Kyiv; the clock keeps ticking so timers behave normally. */
 val TEST_ZONE: ZoneId = ZoneId.of("Europe/Kyiv")

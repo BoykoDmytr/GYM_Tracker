@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boykodmytr.gymtracker.R
+import com.boykodmytr.gymtracker.ui.components.SecondaryButton
 import com.boykodmytr.gymtracker.ui.components.SectionCard
 import com.boykodmytr.gymtracker.ui.components.TextInputDialog
 
@@ -40,9 +42,11 @@ import com.boykodmytr.gymtracker.ui.components.TextInputDialog
 fun ProgramsScreen(
     onOpenProgram: (String) -> Unit,
     onOpenLibrary: () -> Unit,
+    onAddBuiltIn: () -> Unit,
     viewModel: ProgramsViewModel = hiltViewModel(),
 ) {
     val programs by viewModel.programs.collectAsStateWithLifecycle()
+    val builtIn by viewModel.builtInToAdd.collectAsStateWithLifecycle()
     var creating by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(viewModel) { viewModel.created.collect(onOpenProgram) }
 
@@ -89,6 +93,18 @@ fun ProgramsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+            }
+            builtIn?.let { program ->
+                item(key = "built-in") {
+                    SectionCard(title = stringResource(R.string.programs_built_in)) {
+                        Text(program.name, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            stringResource(R.string.programs_built_in_summary, program.workouts.joinToString(" · ") { it.name }, program.exerciseCount),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        SecondaryButton(stringResource(R.string.programs_built_in_add), onAddBuiltIn, Modifier.fillMaxWidth(), icon = Icons.Filled.Add)
+                    }
                 }
             }
         }

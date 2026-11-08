@@ -49,6 +49,16 @@ class SupersetsTest {
     }
 
     @Test
+    fun `labels from a program file become supersets of neighbours`() {
+        assertEquals(listOf(null, "n1", "n1", "n2", "n2", null), Supersets.fromLabels(listOf(null, "1", " 1 ", "2", "2", ""), newId))
+    }
+
+    @Test
+    fun `a label used again further down starts a new superset, a lone label is none`() {
+        assertEquals(listOf("n1", "n1", null, "n2", "n2", null), Supersets.fromLabels(listOf("А", "а", null, "А", "А", "Б"), newId))
+    }
+
+    @Test
     fun `superset alternates exercises and rests only after a round`() {
         val s = session(
             listOf(

@@ -2,8 +2,11 @@ package com.boykodmytr.gymtracker.feature.data
 
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.boykodmytr.gymtracker.data.seed.BuiltInPrograms
 import com.boykodmytr.gymtracker.data.transfer.DocumentFiles
 import com.boykodmytr.gymtracker.data.transfer.DocumentTooLargeException
 import com.boykodmytr.gymtracker.domain.repository.DataTransferRepository
@@ -24,12 +27,14 @@ import com.boykodmytr.gymtracker.domain.transfer.ImportPlan
 import com.boykodmytr.gymtracker.domain.transfer.ImportPlanner
 import com.boykodmytr.gymtracker.domain.transfer.IssueKind
 import com.boykodmytr.gymtracker.domain.transfer.MatchReason
+import com.boykodmytr.gymtracker.domain.transfer.ParsedProgram
 import com.boykodmytr.gymtracker.domain.transfer.ParsedProgramFile
 import com.boykodmytr.gymtracker.domain.transfer.ParsedWorkoutFile
 import com.boykodmytr.gymtracker.domain.transfer.ProgramColumnMapping
 import com.boykodmytr.gymtracker.domain.transfer.ProgramFileParser
 import com.boykodmytr.gymtracker.domain.transfer.WorkoutField
 import com.boykodmytr.gymtracker.domain.transfer.WorkoutFileParser
+import com.boykodmytr.gymtracker.ui.navigation.DataImportRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +70,8 @@ data class BodyReview(val fileName: String, val charset: String, val plan: BodyI
 data class ProgramReview(
     val fileName: String,
     val charset: String,
-    val delimiter: Char,
+    /** Null for the program that ships with the app (no file). */
+    val delimiter: Char?,
     val file: ParsedProgramFile,
     val matches: List<ExerciseMatch>,
     val exercises: List<ExistingExercise>,
@@ -96,6 +102,7 @@ sealed interface ImportEvent {
 
 @HiltViewModel
 class DataImportViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val repository: DataTransferRepository,
     private val files: DocumentFiles,
 ) : ViewModel() {
@@ -110,6 +117,32 @@ class DataImportViewModel @Inject constructor(
     val events: Flow<ImportEvent> = _events.receiveAsFlow()
 
     private var context: ImportContext? = null
+
+    init {
+        if (savedStateHandle.toRoute<DataImportRoute>().builtInProgram) openBuiltIn(BuiltInPrograms.fullBodyV11)
+    }
+
+    /**
+     * A program that ships with the app goes through the same review as a file: its exercise names are
+     * matched to the exercises already here (history and weight suggestions stay with them), every
+     * match can be changed, and the import can be undone.
+     */
+    fun openBuiltIn(program: ParsedProgram) {
+        viewModelScope.launch {
+            _step.value = ImportStep.Working
+            val ctx = repository.importContext().also { context = it }
+            val file = ParsedProgramFile(listOf(program), emptyList())
+            _step.value = ImportStep.ReviewProgram(programReview(program.name, charset = "", delimiter = null, file = file, ctx = ctx))
+        }
+    }
+
+    private suspend fun programReview(name: String, charset: String, delimiter: Char?, file: ParsedProgramFile, ctx: ImportContext): ProgramReview {
+        val existingNames = repository.programNames().map(HeaderText::key).toSet()
+        val issues = file.issues + file.programs.filter { HeaderText.key(it.name) in existingNames }
+            .map { ImportIssue(IssueKind.PROGRAM_EXISTS, workout = it.name) }
+        val matches = ImportPlanner.suggestMatches(ProgramFileParser.exerciseCounts(file), ctx.exercises)
+        return ProgramReview(name, charset, delimiter, file, matches, ctx.exercises, issues)
+    }
 
     fun open(uri: Uri) {
         viewModelScope.launch {
@@ -140,11 +173,7 @@ class DataImportViewModel @Inject constructor(
         ProgramColumnMapping.detect(rows)?.let { programMapping ->
             val file = ProgramFileParser.parse(rows, programMapping, defaultWorkoutName(name))
             if (file.programs.isEmpty() && file.issues.isEmpty()) return ImportStep.Failed(FailureReason.EMPTY)
-            val existingNames = repository.programNames().map(HeaderText::key).toSet()
-            val issues = file.issues + file.programs.filter { HeaderText.key(it.name) in existingNames }
-                .map { ImportIssue(IssueKind.PROGRAM_EXISTS, workout = it.name) }
-            val matches = ImportPlanner.suggestMatches(ProgramFileParser.exerciseCounts(file), ctx.exercises)
-            return ImportStep.ReviewProgram(ProgramReview(name, charset, delimiter, file, matches, ctx.exercises, issues))
+            return ImportStep.ReviewProgram(programReview(name, charset, delimiter, file, ctx))
         }
 
         val mapping = ColumnMapping.detect(rows)

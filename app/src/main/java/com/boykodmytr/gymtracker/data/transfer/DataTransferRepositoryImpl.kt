@@ -13,6 +13,7 @@ import com.boykodmytr.gymtracker.core.database.entity.TemplateExerciseEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutSessionEntity
 import com.boykodmytr.gymtracker.core.database.entity.WorkoutTemplateEntity
 import com.boykodmytr.gymtracker.data.repository.toDomain
+import com.boykodmytr.gymtracker.domain.logic.Supersets
 import com.boykodmytr.gymtracker.domain.model.BuiltInMeasurementTypes
 import com.boykodmytr.gymtracker.domain.model.ExerciseStatus
 import com.boykodmytr.gymtracker.domain.model.SessionStatus
@@ -249,10 +250,11 @@ class DataTransferRepositoryImpl @Inject constructor(
             val templateExercises = mutableListOf<TemplateExerciseEntity>()
             for (program in programs) {
                 val programId = newId()
-                programEntities += ProgramEntity(programId, program.name, "", isActive = false, startedOn = null, createdAt = now, updatedAt = now)
+                programEntities += ProgramEntity(programId, program.name, program.description, isActive = false, startedOn = null, createdAt = now, updatedAt = now)
                 program.workouts.forEachIndexed { workoutIndex, workout ->
                     val templateId = newId()
                     templates += WorkoutTemplateEntity(templateId, programId, workout.name, workoutIndex, now, now)
+                    val supersets = Supersets.fromLabels(workout.exercises.map { it.superset }, ::newId)
                     workout.exercises.forEachIndexed { order, e ->
                         templateExercises += TemplateExerciseEntity(
                             id = newId(),
@@ -268,6 +270,7 @@ class DataTransferRepositoryImpl @Inject constructor(
                             notes = e.note,
                             createdAt = now,
                             updatedAt = now,
+                            supersetId = supersets[order],
                         )
                     }
                 }

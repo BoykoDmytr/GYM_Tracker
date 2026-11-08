@@ -64,6 +64,7 @@ fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             ProgramsScreen(
                 onOpenProgram = { navController.navigate(ProgramDetailRoute(it)) },
                 onOpenLibrary = { navController.navigate(ExerciseLibraryRoute()) },
+                onAddBuiltIn = { navController.navigate(DataImportRoute(builtInProgram = true)) },
             )
         }
         composable<ProfileRoute> {
@@ -168,7 +169,7 @@ fun GymNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             SettingsScreen(
                 onBack = back,
                 onOpenExport = { navController.navigate(DataExportRoute) },
-                onOpenImport = { navController.navigate(DataImportRoute) },
+                onOpenImport = { navController.navigate(DataImportRoute()) },
             )
         }
         composable<DataExportRoute> { DataExportScreen(onBack = back) }

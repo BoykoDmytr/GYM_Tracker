@@ -27,5 +27,6 @@ import kotlinx.serialization.Serializable
 @Serializable data class MeasurementDetailRoute(val typeId: String)
 @Serializable data object SettingsRoute
 @Serializable data object DataExportRoute
-@Serializable data object DataImportRoute
+/** [builtInProgram]: open straight at the review of the program that ships with the app. */
+@Serializable data class DataImportRoute(val builtInProgram: Boolean = false)
 @Serializable data object TimerRoute

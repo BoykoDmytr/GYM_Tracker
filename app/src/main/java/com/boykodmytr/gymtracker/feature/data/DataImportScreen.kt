@@ -249,7 +249,16 @@ private fun androidx.compose.foundation.lazy.LazyListScope.programReview(
     resources: Resources,
 ) {
     val programs = review.file.programs
-    item(key = "file") { FileCard(review.fileName, review.charset, review.delimiter) }
+    item(key = "file") {
+        if (review.delimiter == null) {
+            SectionCard {
+                Text(review.fileName, style = MaterialTheme.typography.titleMedium)
+                Hint(stringResource(R.string.import_built_in_hint))
+            }
+        } else {
+            FileCard(review.fileName, review.charset, review.delimiter)
+        }
+    }
     item(key = "summary") {
         SectionCard(title = stringResource(R.string.import_program_summary_title)) {
             programs.forEach { p ->
@@ -280,12 +289,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.programReview(
         program.workouts.forEachIndexed { index, workout ->
             item(key = "workout-${program.name}-$index") {
                 SectionCard(title = if (programs.size > 1) "${program.name} · ${workout.name}" else workout.name) {
+                    val supersetLabel = stringResource(R.string.superset_label).lowercase()
                     workout.exercises.forEachIndexed { order, e ->
                         val t = e.target
                         val details = listOfNotNull(
                             "${Fmt.range(t.setsMin, t.setsMax)}×${Fmt.range(t.repsMin, t.repsMax)}",
                             t.weightKg?.let { "${Fmt.number(it)} кг" },
                             e.restSeconds?.let { Fmt.restLabel(it) },
+                            e.superset?.let { supersetLabel },
                         ).joinToString(" · ")
                         Text("${order + 1}. ${e.name}", style = MaterialTheme.typography.bodyMedium)
                         Hint(details)
